@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนที่ 5 - CSS Flexbox Mastery</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #f8fafc;
+            --ink: #1e293b;
+            --flex-blue: #0ea5e9;
+            --deep-blue: #0369a1;
+            --desk: #1e1e26;
+            --preview-bg: #ffffff;
+            --accent-purple: #8b5cf6;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 850px;
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-wrapper.is-open { width: 1300px; }
+
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: linear-gradient(135deg, var(--flex-blue), var(--deep-blue)); 
+            left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid rgba(0,0,0,0.2); box-shadow: 25px 0 50px rgba(0,0,0,0.5);
+            cursor: pointer; backface-visibility: hidden;
+        }
+
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        /* ตกแต่งหน้าปกเพิ่มเติม */
+        .cover-pattern {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.1) 1px, transparent 0);
+            background-size: 24px 24px; pointer-events: none;
+        }
+
+        .notebook {
+            position: absolute; width: 1300px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { 
+            flex: 1; padding: 50px 70px; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+        }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--deep-blue); border-bottom: 3px solid var(--flex-blue); padding-bottom: 10px; margin-bottom: 20px; font-weight: 700; font-size: 2rem; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: var(--ink); margin-top: 25px; font-weight: 700; border-left: 5px solid var(--accent-purple); padding-left: 15px; font-size: 1.25rem; }
+        p { line-height: 1.8; font-size: 1rem; color: #334155; margin-bottom: 1.2rem; }
+
+        .code-block { 
+            background: #0f172a; color: #e2e8f0; padding: 20px; 
+            border-radius: 12px; font-family: 'Fira Code', monospace; 
+            font-size: 0.85rem; margin: 20px 0; border-right: 4px solid var(--flex-blue);
+            line-height: 1.6; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .preview-label { background: #f1f5f9; color: #475569; font-size: 0.8rem; padding: 6px 15px; font-weight: bold; border-radius: 8px 8px 0 0; border: 1px solid #e2e8f0; border-bottom: 0; display: inline-block; }
+        .code-preview { background: var(--preview-bg); border: 1px solid #e2e8f0; padding: 20px; border-radius: 0 12px 12px 12px; margin-bottom: 25px; }
+
+        .tag { color: #7dd3fc; } .prop { color: #fbbf24; } .val { color: #34d399; }
+
+        .tip-box { background: #f0f9ff; border-radius: 12px; padding: 20px; border-left: 6px solid var(--flex-blue); margin: 20px 0; font-size: 0.95rem; color: #0369a1; }
+        .tag-badge { background: #e0f2fe; padding: 3px 8px; border-radius: 6px; font-family: 'Fira Code', monospace; color: var(--deep-blue); font-size: 0.9rem; font-weight: 500; }
+
+        #editor { width: 100%; height: 250px; font-family: 'Fira Code', monospace; padding: 15px; border-radius: 12px; border: 2px solid #e2e8f0; background: #fff; margin-bottom: 15px; font-size: 0.9rem; }
+        #live-preview { width: 100%; min-height: 300px; background: white; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; }
+
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px; border-top: 1px solid #e2e8f0; border-radius: 0 0 20px 5px; z-index: 10;
+        }
+
+        .btn-nav { background: var(--ink); color: white; border: none; padding: 10px 25px; border-radius: 12px; font-weight: bold; transition: 0.3s; }
+        .btn-nav:hover:not(:disabled) { background: var(--flex-blue); transform: translateY(-2px); }
+        .btn-next-chapter { background: #059669; }
+        
+        /* Flex Demo Classes */
+        .flex-container-demo { display: flex; background: #f1f5f9; padding: 10px; border-radius: 8px; gap: 10px; }
+        .flex-item-demo { background: var(--flex-blue); color: white; padding: 15px; border-radius: 6px; text-align: center; min-width: 60px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+        <div class="cover-pattern"></div>
+        <div style="width:150px; height:150px; background:rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius:30px; display:flex; align-items:center; justify-content:center; margin-bottom:30px; transform: rotate(-10deg); border: 2px solid rgba(255,255,255,0.5);">
+            <i class="bi bi-layers-half" style="font-size:5rem; color:white"></i>
+        </div>
+        <h1 class="display-3 fw-bold" style="font-family: 'Chakra Petch'; letter-spacing: 2px;">CSS3</h1>
+        <p class="lead fw-light">MODERN LAYOUT MASTERY</p>
+        <div style="width: 100px; height: 6px; background: var(--accent-purple); margin: 25px 0; border-radius: 3px;"></div>
+        <h4 class="text-white border-0 p-0">UNIT 05: FLEXBOX</h4>
+        <p class="small opacity-75">จัดเลย์เอาท์ให้ยืดหยุ่นเหมือนมือโปร</p>
+        <div class="mt-5 small animate-bounce"><i class="bi bi-mouse-fill"></i> CLICK TO OPEN GUIDE</div>
+    </div>
+
+    <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+                <button class="btn-nav" style="background:#64748b" onclick="window.location.href='course_css.html'"><i class="bi bi-house">เลือกบทเรียน</i></button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            <div class="fw-bold text-muted">หน้า <span id="pageNum">1</span> / <span id="totalPage"></span></div>
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>ถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const content = [
+    {
+        left: `
+            <h2>1. ยุคสมัยของ Flexbox</h2>
+            <p>ในอดีต การจัดตำแหน่งองค์ประกอบในหน้าเว็บเป็นเรื่องน่าปวดหัวมาก เราต้องใช้ <code>float</code> หรือ <code>table</code> ซึ่งทำมาเพื่อเนื้อหาคนละแบบ</p>
+            <p><b>Flexbox</b> (Flexible Box Layout) ถูกออกแบบมาเพื่อแก้ปัญหานี้โดยเฉพาะ มันช่วยให้เราจัดเรียง จัดตำแหน่ง และกระจายพื้นที่ว่างระหว่างไอเท็มใน Container ได้อย่างง่ายดาย แม้ว่าขนาดของไอเท็มนั้นจะไม่แน่นอนก็ตาม</p>
+            
+            <h4>แนวคิดหลัก: Parent & Child</h4>
+            <p>ความลับของ Flexbox คือความสัมพันธ์แบบ <b>Container</b> (พ่อแม่) และ <b>Items</b> (ลูกๆ) เมื่อเราประกาศให้ตัวแม่เป็น Flex ลูกๆ ทุกตัวจะได้รับพลังความยืดหยุ่นทันที</p>
+            <div class="tip-box">
+                <i class="bi bi-info-circle"></i> <b>ทำไมต้องใช้?</b> เพราะมันตอบโจทย์ Responsive Design ยุคปัจจุบันที่สุด ไม่ว่าจอจะเล็กหรือใหญ่ Flexbox จะช่วยคำนวณพื้นที่ให้เราเอง
+            </div>
+        `,
+        right: `
+            <h4>การเริ่มต้นเปิดใช้งาน</h4>
+            <p>เพียงแค่เขียน Property เดียวใน CSS ของตัวครอบ (Container) โลกการจัดหน้าเว็บของนายจะเปลี่ยนไปตลอดกาล:</p>
+            <div class="code-block">
+                <span class="prop">.container</span> {<br>
+                &nbsp;&nbsp;<span class="prop">display</span>: <span class="val">flex</span>;<br>
+                }
+            </div>
+            <h4>แกนหลักและแกนรอง (Axes)</h4>
+            <p>ก่อนจะไปต่อ นายต้องเข้าใจว่า Flexbox ทำงานบน 2 แกนเสมอ:</p>
+            <ul>
+                <li><b>Main Axis:</b> แกนหลัก (ค่าเริ่มต้นคือแนวนอน)</li>
+                <li><b>Cross Axis:</b> แกนนอน (ค่าเริ่มต้นคือแนวตั้ง)</li>
+            </ul>
+            <p>การเข้าใจแกนเหล่านี้จะช่วยให้นายไม่งงเวลาใช้คำสั่ง <code>justify-content</code> หรือ <code>align-items</code> ในหน้าถัดไปครับ</p>
+        `
+    },
+    {
+        left: `
+            <h2>2. ทิศทางการวาง (Flex Direction)</h2>
+            <p>เราสามารถกำหนดได้ว่าอยากให้ลูกๆ วางเรียงกันในทิศทางไหน ผ่าน property <span class="tag-badge">flex-direction</span></p>
+            <div class="code-block">
+                <span class="prop">flex-direction</span>: <span class="val">row</span>; <span class="text-muted">/* แนวนอน (Default) */</span><br>
+                <span class="prop">flex-direction</span>: <span class="val">column</span>; <span class="text-muted">/* แนวตั้ง */</span><br>
+                <span class="prop">flex-direction</span>: <span class="val">row-reverse</span>; <span class="text-muted">/* นอนย้อนกลับ */</span>
+            </div>
+            <h4>ตัวอย่าง Row:</h4>
+            <div class="flex-container-demo" style="flex-direction: row;">
+                <div class="flex-item-demo">1</div><div class="flex-item-demo">2</div><div class="flex-item-demo">3</div>
+            </div>
+            <p>เมื่อใช้ <code>column</code> แกนหลักจะเปลี่ยนเป็นแนวตั้งทันที ซึ่งเหมาะมากสำหรับการทำเมนูบนมือถือ (Mobile Menu)</p>
+        `,
+        right: `
+            <h4>การจัดการการขึ้นบรรทัดใหม่</h4>
+            <p>ปกติแล้ว Flexbox จะพยายามบีบลูกๆ ให้อยู่ในแถวเดียวเสมอแม้หน้าจอจะแคบแค่ไหน หากต้องการให้ลูก "หล่น" ลงมาเมื่อพื้นที่ไม่พอ ต้องใช้:</p>
+            <div class="code-block">
+                <span class="prop">flex-wrap</span>: <span class="val">wrap</span>;
+            </div>
+            <div class="tip-box">
+                <i class="bi bi-lightbulb"></i> <b>Shorthand:</b> นายสามารถรวบยอด direction และ wrap เข้าด้วยกันได้ด้วยคำสั่ง <code>flex-flow: row wrap;</code> เท่กว่าเยอะ!
+            </div>
+            <p>การใช้ Wrap สำคัญมากในการทำ <b>Card Layout</b> หรือ <b>Gallery</b> เพราะมันทำให้รูปภาพจัดเรียงตัวเองได้ตามขนาดหน้าจอโดยไม่ต้องเขียน Media Query เยอะแยะ</p>
+        `
+    },
+    {
+        left: `
+            <h2>3. Justify Content (แกนหลัก)</h2>
+            <p>นี่คือคำสั่งที่นายจะได้ใช้บ่อยที่สุด! มันคือการจัดตำแหน่งลูกๆ บน <b>Main Axis</b> (แกนหลัก)</p>
+            <div class="code-block">
+                <span class="prop">justify-content</span>: <span class="val">center</span>; <span class="text-muted">/* กึ่งกลาง */</span><br>
+                <span class="prop">justify-content</span>: <span class="val">space-between</span>; <span class="text-muted">/* ชิดซ้าย-ขวา */</span><br>
+                <span class="prop">justify-content</span>: <span class="val">space-around</span>; <span class="text-muted">/* กระจายเท่าๆ กัน */</span>
+            </div>
+            
+            <p>ลองนึกภาพแถบเมนูข้างบน (Navbar) ส่วนใหญ่เราจะใช้ <code>space-between</code> เพื่อให้โลโก้อยู่ซ้ายสุด และปุ่มล็อกอินอยู่ขวาสุดนั่นเอง</p>
+        `,
+        right: `
+            <h4>ตัวอย่าง Space-Between:</h4>
+            <div class="flex-container-demo" style="justify-content: space-between;">
+                <div class="flex-item-demo">Logo</div>
+                <div class="flex-item-demo">Menu</div>
+                <div class="flex-item-demo">Login</div>
+            </div>
+            <br>
+            <h4>ค่าอื่นๆ ที่น่าสนใจ:</h4>
+            <ul>
+                <li><b>flex-start:</b> กองกันอยู่ที่จุดเริ่มต้น</li>
+                <li><b>flex-end:</b> ไปกองกันอยู่ที่จุดจบ</li>
+                <li><b>space-evenly:</b> ช่องว่างทุกช่อง (รวมขอบข้าง) จะเท่ากันเป๊ะ</li>
+            </ul>
+            <p>เลือกใช้ตามความต้องการของดีไซน์ได้เลยครับ การใช้ Justify Content จะช่วยให้เราไม่ต้องไปนั่งตั้งค่า <code>margin-left</code> ให้เสียเวลา</p>
+        `
+    },
+    {
+        left: `
+            <h2>4. Align Items (แกนรอง)</h2>
+            <p>ถ้า Justify คือแนวนอน Align ก็คือแนวตั้ง (ในกรณี row) มันช่วยจัดการตำแหน่งบน <b>Cross Axis</b></p>
+            <div class="code-block">
+                <span class="prop">align-items</span>: <span class="val">center</span>; <span class="text-muted">/* กึ่งกลางแนวตั้ง */</span><br>
+                <span class="prop">align-items</span>: <span class="val">stretch</span>; <span class="text-muted">/* ยืดเต็มความสูง */</span><br>
+                <span class="prop">align-items</span>: <span class="val">baseline</span>; <span class="text-muted">/* เรียงตามฐานอักษร */</span>
+            </div>
+            <h4>Holy Grail: การจัดกึ่งกลางที่แท้จริง</h4>
+            <p>เมื่อก่อนการเอาของไว้ตรงกลางหน้าจอเป็นเรื่องยากมาก แต่ด้วย Flexbox นายแค่ใช้:</p>
+            <div class="code-block">
+                <span class="prop">display</span>: <span class="val">flex</span>;<br>
+                <span class="prop">justify-content</span>: <span class="val">center</span>;<br>
+                <span class="prop">align-items</span>: <span class="val">center</span>;
+            </div>
+        `,
+        right: `
+            <h4>Align Self (พ่ายแพ้ต่อปัจเจก)</h4>
+            <p>บางครั้งเราอยากให้ลูกตัวเดียว "แหกคอก" ออกมาจากกลุ่ม นายสามารถใช้ <code>align-self</code> ที่ตัวลูกได้เลย:</p>
+            <div class="code-block">
+                <span class="text-muted">/* ที่ตัว Child */</span><br>
+                <span class="prop">align-self</span>: <span class="val">flex-end</span>;
+            </div>
+            <div class="preview-label">ผลลัพธ์: ทุกตัวอยู่บน แต่ตัวเดียวอยู่ล่าง</div>
+            <div class="flex-container-demo" style="height: 100px; align-items: flex-start;">
+                <div class="flex-item-demo">ปกติ</div>
+                <div class="flex-item-demo" style="align-self: flex-end; background: var(--accent-purple);">แหกคอก</div>
+                <div class="flex-item-demo">ปกติ</div>
+            </div>
+            <p>เทคนิคนี้มีประโยชน์มากเวลาทำ Layout ซับซ้อนที่ต้องการให้บางส่วนขยับไปตำแหน่งพิเศษ</p>
+        `
+    },
+    {
+        left: `
+            <h2>5. Flex Grow & Shrink</h2>
+            <p>นี่คือหัวใจของความ "Flexible" ลูกแต่ละตัวสามารถกำหนดได้ว่า "ถ้ามีพื้นที่เหลือ ฉันขอขยายได้แค่ไหน?"</p>
+            <div class="code-block">
+                <span class="prop">flex-grow</span>: <span class="val">1</span>; <span class="text-muted">/* ขยายกินพื้นที่ว่าง */</span><br>
+                <span class="prop">flex-shrink</span>: <span class="val">0</span>; <span class="text-muted">/* ห้ามหดตัวเด็ดขาด */</span>
+            </div>
+            <h4>การใช้ Flex Basis</h4>
+            <p>มันคือการกำหนด "ขนาดเริ่มต้น" ก่อนที่มันจะขยายหรือหด คล้ายๆ กับ <code>width</code> แต่ยืดหยุ่นกว่า</p>
+            <div class="tip-box">
+                <i class="bi bi-star-fill"></i> <b>Pro Trick:</b> ปกติเราจะใช้ property ย่อคือ <code>flex: 1 0 200px;</code> (grow | shrink | basis)
+            </div>
+        `,
+        right: `
+            <h4>ตัวอย่างการแบ่งสัดส่วน:</h4>
+            <p>ถ้านายตั้งค่าลูกตัวที่หนึ่งเป็น <code>flex-grow: 2</code> และตัวที่สองเป็น <code>1</code> ตัวแรกจะขยายใหญ่เป็น 2 เท่าของตัวที่สองในพื้นที่ที่เหลือ</p>
+            <div class="flex-container-demo">
+                <div class="flex-item-demo" style="flex-grow: 2;">Grow 2</div>
+                <div class="flex-item-demo" style="flex-grow: 1;">Grow 1</div>
+            </div>
+            <p>ระบบนี้ช่วยให้เราทำ <b>Sidebar + Content Area</b> ได้ง่ายมาก โดยให้ Content เป็น <code>flex-grow: 1</code> เพื่อให้มันขยายจนเต็มหน้าจอตลอดเวลา</p>
+        `
+    },
+    {
+        left: `
+            <h2>6. Gap (การเว้นระยะห่าง)</h2>
+            <p>ในยุคก่อน เราต้องใช้ <code>margin</code> เพื่อเว้นช่องว่างระหว่างไอเท็ม ซึ่งมักจะมีปัญหาขอบเกิน (Last Child Margin)</p>
+            <p>ใน CSS ยุคใหม่ นายสามารถใช้ <span class="tag-badge">gap</span> ที่ตัว Parent ได้เลย! มันจะเว้นวรรคให้เฉพาะ "ระหว่าง" ลูกๆ เท่านั้น</p>
+            <div class="code-block">
+                <span class="prop">display</span>: <span class="val">flex</span>;<br>
+                <span class="prop">gap</span>: <span class="val">20px</span>; <span class="text-muted">/* ห่างทั้งแนวตั้ง/นอน */</span><br>
+                <span class="prop">row-gap</span>: <span class="val">10px</span>;
+            </div>
+            
+        `,
+        right: `
+            <h4>ทำไม Gap ถึงดีกว่า Margin?</h4>
+            <ol>
+                <li>ไม่ต้องเขียน <code>:last-child { margin-right: 0; }</code></li>
+                <li>จัดการช่องว่างได้แม่นยำแม้จะมีการ Wrap บรรทัด</li>
+                <li>อ่านง่ายและดูแลรักษาโค้ดได้สะดวกกว่า</li>
+            </ol>
+            <div class="tip-box" style="background:#fff7ed; border-color:#fb923c; color:#9a3412;">
+                <i class="bi bi-exclamation-triangle"></i> <b>Browser Support:</b> ปัจจุบันเบราว์เซอร์หลักๆ รองรับ <code>gap</code> ใน Flexbox หมดแล้ว (ยกเว้น IE ซึ่งตายไปแล้ว ช่างมันเถอะ!)
+            </div>
+        `
+    },
+    {
+        left: `
+            <h2>7. การจัดลำดับ (Order)</h2>
+            <p>นี่คือจุดขายที่เจ๋งที่สุด! นายสามารถสลับที่ลูกๆ ได้โดยไม่ต้องแก้โค้ด HTML เลยแม้แต่นิดเดียว</p>
+            <div class="code-block">
+                <span class="prop">order</span>: <span class="val">1</span>; <span class="text-muted">/* ยิ่งค่าน้อยยิ่งอยู่หน้า */</span>
+            </div>
+            <h4>ใช้ตอนไหน?</h4>
+            <p>นึกถึงเวลาทำ Responsive: บนจอคอมเราอยากให้รูปอยู่ซ้าย ข้อความอยู่ขวา แต่บนมือถือเราอยากให้รูปอยู่ข้างล่างข้อความ นายแค่ใช้ <code>order</code> สลับที่มันใน Media Query!</p>
+        `,
+        right: `
+            <h4>ตัวอย่างการสลับที่:</h4>
+            <div class="flex-container-demo">
+                <div class="flex-item-demo" style="order: 3;">3 (หลังสุด)</div>
+                <div class="flex-item-demo" style="order: 1; background: var(--accent-purple);">1 (หน้าสุด)</div>
+                <div class="flex-item-demo" style="order: 2;">2 (กลาง)</div>
+            </div>
+            <p><b>ข้อควรระวัง:</b> การเปลี่ยน <code>order</code> เปลี่ยนเฉพาะสิ่งที่ตาเห็น แต่ไม่ได้เปลี่ยนลำดับการ Tab สำหรับคนพิการที่ใช้ Screen Reader ดังนั้นอย่าใช้จนมั่วเกินไปนะครับ</p>
+        `
+    },
+    {
+        left: `
+            <h2>8. สรุป Master Playground</h2>
+            <p>ยินดีด้วย! นายจบหลักสูตร Flexbox ขั้นเทพแล้ว ต่อไปนี้คือสนามเด็กเล่นให้นายลองประกอบร่างเลย์เอาท์จริง</p>
+            <h4>โจทย์ส่งท้าย:</h4>
+            <ul class="small">
+                <li>ลองทำ Navbar ที่มีปุ่มกระจายซ้ายขวา</li>
+                <li>สร้าง Card Grid ที่มีการ <code>wrap</code></li>
+                <li>ฝึกใช้ <code>gap</code> แทนการใช้ margin</li>
+            </ul>
+            <textarea id="editor" spellcheck="false" oninput="updatePreview()">
+<div style="display: flex; justify-content: space-between; align-items: center; background: #0369a1; padding: 15px; color: white; border-radius: 8px;">
+  <div style="font-weight: bold;">FLEX LOGO</div>
+  <nav style="display: flex; gap: 15px;">
+    <span>Home</span>
+    <span>About</span>
+    <button style="background: white; border: 0; padding: 5px 15px; border-radius: 5px;">Login</button>
+  </nav>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;">
+  <div style="flex: 1 0 100px; background: #e0f2fe; padding: 20px; text-align: center; border: 1px solid #bae6fd;">Card 1</div>
+  <div style="flex: 1 0 100px; background: #e0f2fe; padding: 20px; text-align: center; border: 1px solid #bae6fd;">Card 2</div>
+  <div style="flex: 2 0 100px; background: #8b5cf6; color: white; padding: 20px; text-align: center;">Card 3 (Extra)</div>
+</div></textarea>
+        `,
+        right: `
+            <h4>Live Preview:</h4>
+            <div id="live-preview"></div>
+            <div class="tip-box" style="background: #ecfdf5; border-color: #10b981; color: #065f46; margin-top:20px;">
+                <i class="bi bi-award-fill"></i> <b>Unit 05 Completed!</b><br>
+                นายคือ Flexbox Master แล้ว! เลย์เอาท์ที่เคยว่ายาก ตอนนี้กลายเป็นเรื่องขี้ผงไปเลยล่ะ
+            </div>
+        `
+    }
+];
+
+    let currentPage = 0;
+    let isOpen = false;
+
+    document.getElementById('totalPage').innerText = content.length;
+
+    function openBook() {
+        if (isOpen) return;
+        isOpen = true;
+        document.getElementById('wrapper').classList.add('is-open');
+        document.getElementById('bookCover').classList.add('opened');
+        setTimeout(renderPage, 300);
+    }
+
+    function renderPage() {
+        const set = content[currentPage];
+        const left = document.getElementById('left-page');
+        const right = document.getElementById('right-page');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        left.style.opacity = 0;
+        right.style.opacity = 0;
+        
+        setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+           if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป</span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'css 6.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+        }, 150);
+    }
+    
+
+    function changePage(step) {
+        if (currentPage + step >= 0 && currentPage + step < content.length) {
+            currentPage += step;
+            renderPage();
+        }
+    }
+
+    function updatePreview() {
+        const code = document.getElementById('editor').value;
+        const preview = document.getElementById('live-preview');
+        if(preview) {
+            preview.innerHTML = code;
+        }
+    }
+</script>
+</body>
+</html>

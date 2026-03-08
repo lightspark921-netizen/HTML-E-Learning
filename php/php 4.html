@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Lesson 4 - Loops Control</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #fdfcf0;
+            --ink: #1a1a2e;
+            --php-purple: #777bb4;
+            --php-dark: #474a8a;
+            --desk: #1e293b;
+            --preview-bg: #ffffff;
+            --terminal-black: #1e1e1e;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 800px;
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-wrapper.is-open { width: 1200px; }
+
+        /* ปรับปรุงดีไซน์หน้าปกใหม่ */
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: linear-gradient(135deg, var(--php-purple) 0%, var(--php-dark) 100%); 
+            left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid rgba(0,0,0,0.3); box-shadow: 25px 0 50px rgba(0,0,0,0.5);
+            cursor: pointer; backface-visibility: hidden;
+            overflow: hidden;
+        }
+        
+        /* ลายตกแต่งหน้าปกแบบ Code Binary */
+        .book-cover::before {
+            content: "<?php while($learning) { echo 'Success'; } ?>";
+            position: absolute; top: 20px; font-family: 'Fira Code'; opacity: 0.1; font-size: 1.2rem; white-space: nowrap;
+        }
+
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        .notebook {
+            position: absolute; width: 1200px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { 
+            flex: 1; padding: 40px 50px; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+        }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--php-dark); border-bottom: 3px solid var(--php-purple); padding-bottom: 10px; margin-bottom: 20px; font-weight: 700; font-size: 1.8rem; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: #333; margin-top: 25px; font-weight: 700; border-left: 5px solid var(--php-purple); padding-left: 12px; font-size: 1.2rem; }
+        p { line-height: 1.7; font-size: 1rem; color: #2c3e50; margin-bottom: 1.2rem; text-align: justify; }
+
+        .code-block { 
+            background: var(--terminal-black); color: #dcdcaa; padding: 18px; 
+            border-radius: 8px; font-family: 'Fira Code', monospace; 
+            font-size: 0.85rem; margin: 15px 0; border-left: 5px solid #569cd6;
+            line-height: 1.5; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .code-keyword { color: #569cd6; }
+        .code-variable { color: #9cdcfe; }
+        .code-string { color: #ce9178; }
+        .code-comment { color: #6a9955; font-style: italic; }
+
+        .tip-box { background: #f0f4ff; border-radius: 10px; padding: 15px; border-right: 5px solid var(--php-purple); margin: 20px 0; font-size: 0.9rem; line-height: 1.6; }
+        .tag-badge { background: #e0e7ff; padding: 3px 8px; border-radius: 4px; font-family: 'Fira Code'; font-weight: bold; color: var(--php-dark); font-size: 0.85rem; }
+
+        #editor { width: 100%; height: 180px; font-family: 'Fira Code', monospace; padding: 12px; border-radius: 8px; border: 1px solid #ccc; background: #fafafa; }
+        #live-preview { width: 100%; height: 220px; background: #fff; border: 2px solid var(--php-purple); border-radius: 8px; padding: 15px; overflow: auto; font-family: 'Fira Code'; }
+
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; border-top: 1px solid #eee; border-radius: 0 0 20px 5px; z-index: 10;
+        }
+
+        .btn-nav { background: var(--php-dark); color: white; border: none; padding: 8px 25px; border-radius: 50px; font-weight: bold; transition: 0.3s; }
+        .btn-nav:hover:not(:disabled) { background: #2f3161; transform: scale(1.05); }
+        .btn-next-chapter { background: #d32f2f; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+        <div style="position:relative;">
+            <div style="width:150px; height:150px; background:rgba(255,255,255,0.1); border: 2px solid white; border-radius:20px; display:flex; align-items:center; justify-content:center; transform: rotate(10deg); margin-bottom:30px;">
+                <i class="bi bi-reception-4" style="font-size:5rem; color:white; transform: rotate(-10deg);"></i>
+            </div>
+            <div style="position:absolute; top:-10px; right:-10px; width:40px; height:40px; background:#ff4757; border-radius:50%; border:3px solid white; display:flex; align-items:center; justify-content:center; font-weight:bold;">4</div>
+        </div>
+        
+        <h1 class="display-3 fw-bold" style="font-family: 'Chakra Petch'; letter-spacing: 2px;">PHP 8</h1>
+        <p class="lead" style="letter-spacing: 4px; opacity: 0.9;">BACKEND MASTERCLASS</p>
+        <div style="width: 120px; height: 6px; background: #fff; margin: 20px 0; border-radius: 3px;"></div>
+        <h4 class="text-white border-0 p-0">UNIT 04: LOOPS CONTROL</h4>
+        <p class="small mt-2" style="max-width: 300px;">การควบคุมการทำงานซ้ำแบบอัลกอริทึม (While, Do-While, For, Foreach)</p>
+        
+        <div class="mt-5 animate-bounce" style="font-size: 0.9rem; border: 1px outline white; padding: 10px 20px; border-radius: 30px; background: rgba(0,0,0,0.2);">
+            <i class="bi bi-unlock-fill"></i> CLICK TO START MISSION
+        </div>
+    </div>
+
+    <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+                <button class="btn-nav" style="background:#64748b" onclick="window.location.href='course_php.html'"><i class="bi bi-house">เลือกบทเรียน</i></button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            <div class="fw-bold text-muted">หน้า <span id="pageNum">1</span> / <span id="totalPage">8</span></div>
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>ถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const content = [
+    {
+        left: `
+            <h2>1. ความเข้าใจเรื่อง Loops</h2>
+            <p>ในการเขียนโปรแกรม <b>Loops (การวนซ้ำ)</b> คือหัวใจสำคัญที่ช่วยให้นายไม่ต้องเขียนโค้ดซ้ำๆ เดิมๆ นายเคยไหมที่ต้องแสดงรายชื่อคน 1,000 คน? ถ้าไม่มี Loop นายคงต้องเขียน <code>echo</code> พันครั้ง!</p>
+            <h4>ทำไมต้อง Loop ใน PHP?</h4>
+            <p>PHP เป็นภาษาฝั่ง Server ที่มักจะต้องจัดการกับข้อมูลจำนวนมากจาก Database เช่น การดึงโพสต์จาก Facebook หรือสินค้าใน Shopee มาแสดงผล ตัวแปรที่เป็น Array จะทำงานร่วมกับ Loop ได้อย่างทรงพลังที่สุด</p>
+            <div class="tip-box">
+                <i class="bi bi-cpu"></i> <b>Algorithm Thinking:</b> การวนซ้ำช่วยลดขนาดไฟล์โค้ด (Dry Principle: Don't Repeat Yourself) และทำให้การแก้ไขโค้ดภายหลังทำได้ง่ายขึ้นเพียงจุดเดียว
+            </div>
+            <p>ในบทนี้เราจะเจาะลึก 4 ทหารเสือ: <b>While, Do-While, For และ Foreach</b> ซึ่งแต่ละตัวมีความเหมาะสมในสถานการณ์ที่ต่างกันออกไปตามเงื่อนไขที่นายเจอ</p>
+        `,
+        right: `
+            <h2>2. While Loop: เช็คก่อนลุย</h2>
+            <p>เป็น Loop ที่พื้นฐานที่สุด มันจะตรวจสอบ <b>"เงื่อนไข"</b> ก่อนเสมอ ถ้าเงื่อนไขเป็นจริง (True) มันจะทำงานข้างใน และจะทำไปเรื่อยๆ จนกว่าเงื่อนไขจะเป็นเท็จ</p>
+            <div class="code-block">
+                <span class="code-keyword">while</span> ($condition) {<br>
+                &nbsp;&nbsp;<span class="code-comment">// โค้ดที่ต้องการให้ทำงานซ้ำ</span><br>
+                &nbsp;&nbsp;<span class="code-variable">$i</span>++; <span class="code-comment">// อย่าลืมเพิ่มค่า ไม่งั้น Loop จะค้าง (Infinite Loop)</span><br>
+                }
+            </div>
+            <div class="preview-label">ตัวอย่างการใช้งานจริง:</div>
+            <div class="code-block" style="background:#2d2d2d;">
+                <span class="code-variable">$num</span> = 1;<br>
+                <span class="code-keyword">while</span>(<span class="code-variable">$num</span> <= 3) {<br>
+                &nbsp;&nbsp;<span class="code-keyword">echo</span> <span class="code-string">"รอบที่: "</span> . <span class="code-variable">$num</span> . <span class="code-string">"&lt;br&gt;"</span>;<br>
+                &nbsp;&nbsp;<span class="code-variable">$num</span>++;<br>
+                }
+            </div>
+            <p><b>ระวัง!</b> หากนายลืมเปลี่ยนค่าตัวแปรที่เป็นเงื่อนไข คอมพิวเตอร์ของนายจะทำงานจน RAM เต็ม เพราะมันหาทางออกจาก Loop ไม่เจอครับเพื่อน!</p>
+        `
+    },
+    {
+        left: `
+            <h2>3. Do-While: ทำก่อนค่อยถาม</h2>
+            <p>ความต่างของ <b>Do-While</b> กับ While ปกติคือ มันจะ "กัดไม่ปล่อย" อย่างน้อย 1 ครั้งเสมอ แม้ว่าเงื่อนไขในตอนแรกจะเป็นเท็จก็ตาม</p>
+            <div class="code-block">
+                <span class="code-keyword">do</span> {<br>
+                &nbsp;&nbsp;<span class="code-keyword">echo</span> <span class="code-string">"อย่างน้อยต้องเห็นข้อความนี้ 1 ครั้ง"</span>;<br>
+                } <span class="code-keyword">while</span> (<span class="code-variable">$x</span> > 100);
+            </div>
+            <h4>เหมาะกับงานประเภทไหน?</h4>
+            <p>เรามักใช้ Do-While ในกรณีที่ต้องการให้โปรแกรมทำงานก่อน แล้วค่อยถามผู้ใช้ว่า "จะเอาอีกรอบไหม?" เช่น เกมที่ถามว่า Play Again? (Y/N) หรือการสุ่มค่าบางอย่างจนกว่าจะได้ค่าที่พอใจ</p>
+            <div class="tip-box">
+                <b>ข้อสังเกต:</b> ใน Do-While ต้องมีเครื่องหมาย Semi-colon (<code>;</code>) ปิดท้ายบรรทัด While เสมอ ซึ่งต่างจาก While ปกติ นายต้องระวังตรงนี้ให้ดีนะ
+            </div>
+        `,
+        right: `
+            <h2>4. For Loop: ราชาแห่งจำนวนรอบ</h2>
+            <p>ถ้าถายนรู้จำนวนรอบที่แน่นอน เช่น "วน 10 รอบนะ" <b>For Loop</b> คือทางเลือกที่ดีที่สุด เพราะมันเขียนสั้น กระชับ และรวมทุกอย่างไว้ในบรรทัดเดียว</p>
+            <div class="code-block">
+                <span class="code-keyword">for</span> (<span class="code-variable">$i</span>=0; <span class="code-variable">$i</span><10; <span class="code-variable">$i</span>++) {<br>
+                &nbsp;&nbsp;<span class="code-keyword">echo</span> <span class="code-variable">$i</span>;<br>
+                }
+            </div>
+            <p><b>โครงสร้าง 3 ส่วนของ For:</b></p>
+            <ul>
+                <li><b>Init:</b> กำหนดจุดเริ่มต้น (เช่น <code>$i = 0</code>)</li>
+                <li><b>Condition:</b> เงื่อนไขสิ้นสุด (เช่น <code>$i < 10</code>)</li>
+                <li><b>Increment:</b> การปรับค่า (เช่น <code>$i++</code>)</li>
+            </ul>
+            <p>นายสามารถใช้ For Loop สร้างตาราง หรือวนค่าดึงลำดับเลขหน้าเว็บได้อย่างแม่นยำ เป็น Loop ที่เหล่า Developer นิยมใช้มากที่สุดตัวหนึ่งเลยละ!</p>
+        `
+    },
+    {
+        left: `
+            <h2>5. Foreach: อาวุธหนักจัดการ Array</h2>
+            <p>นี่คือ Loop ที่เกิดมาเพื่อจัดการกับข้อมูลแบบชุด (Array) โดยเฉพาะ นายไม่ต้องมานั่งนับ <code>count($array)</code> เอง PHP จะจัดการให้ครบทุกตัว</p>
+            <div class="code-block">
+                <span class="code-variable">$colors</span> = [<span class="code-string">"Red"</span>, <span class="code-string">"Green"</span>, <span class="code-string">"Blue"</span>];<br><br>
+                <span class="code-keyword">foreach</span> (<span class="code-variable">$colors</span> <span class="code-keyword">as</span> <span class="code-variable">$value</span>) {<br>
+                &nbsp;&nbsp;<span class="code-keyword">echo</span> <span class="code-string">"Color: "</span> . <span class="code-variable">$value</span>;<br>
+                }
+            </div>
+            <h4>การเข้าถึง Key และ Value</h4>
+            <p>หาก Array ของนายมีชื่อเล่น (Associative Array) นายสามารถดึงมาได้ทั้งคู่พร้อมกัน:</p>
+            <div class="code-block">
+                <span class="code-keyword">foreach</span> (<span class="code-variable">$user</span> <span class="code-keyword">as</span> <span class="code-variable">$key</span> => <span class="code-variable">$val</span>) {<br>
+                &nbsp;&nbsp;<span class="code-keyword">echo</span> <span class="code-variable">$key</span> . <span class="code-string">": "</span> . <span class="code-variable">$val</span>;<br>
+                }
+            </div>
+        `,
+        right: `
+            <h2>6. Break & Continue: การควบคุมฉุกเฉิน</h2>
+            <p>บางครั้งเราต้องการสั่งหยุด Loop ทันที หรือข้ามรอบบางรอบไป เราจะใช้คำสั่งพิเศษ 2 ตัวนี้ครับ:</p>
+            <ul>
+                <li><b>Break:</b> "หยุดเดี๋ยวนี้!" ใช้เมื่อเจอเงื่อนไขที่ต้องการแล้ว และต้องการออกจาก Loop ทันที</li>
+                <li><b>Continue:</b> "ข้ามอันนี้ไปก่อน!" ใช้เมื่อต้องการข้ามโค้ดที่เหลือในรอบปัจจุบัน แล้วไปเริ่มรอบถัดไปทันที</li>
+            </ul>
+            <div class="code-block">
+                <span class="code-keyword">for</span> (<span class="code-variable">$i</span>=1; <span class="code-variable">$i</span><=10; <span class="code-variable">$i</span>++) {<br>
+                &nbsp;&nbsp;<span class="code-keyword">if</span> (<span class="code-variable">$i</span> == 5) <span class="code-keyword">continue</span>; <span class="code-comment">// เลข 5 จะไม่ถูกพิมพ์</span><br>
+                &nbsp;&nbsp;<span class="code-keyword">if</span> (<span class="code-variable">$i</span> == 8) <span class="code-keyword">break</span>; <span class="code-comment">// หยุดที่เลข 7</span><br>
+                &nbsp;&nbsp;<span class="code-keyword">echo</span> <span class="code-variable">$i</span>;<br>
+                }
+            </div>
+            <p>การใช้ Break มีประโยชน์มากในการค้นหาข้อมูล (Search) เมื่อเจอสิ่งที่หาแล้วก็ไม่จำเป็นต้องวนรอบที่เหลือให้เสียพลังงาน CPU</p>
+        `
+    },
+    {
+        left: `
+            <h2>7. เทคนิค Nested Loops (Loop ซ้อน Loop)</h2>
+            <p>นายจะเจอสิ่งนี้บ่อยมากเมื่อต้องจัดการข้อมูลที่มีมิติ เช่น ตารางหมากรุก, สูตรคูณ หรือข้อมูลระดับซับซ้อน มันคือการเอา Loop ไปซ้อนไว้ใน Loop อีกที</p>
+            <div class="code-block">
+                <span class="code-keyword">for</span> (<span class="code-variable">$i</span>=1; <span class="code-variable">$i</span><=2; <span class="code-variable">$i</span>++) {<br>
+                &nbsp;&nbsp;<span class="code-keyword">for</span> (<span class="code-variable">$j</span>=1; <span class="code-variable">$j</span><=3; <span class="code-variable">$j</span>++) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="code-keyword">echo</span> <span class="code-string">"($i,$j) "</span>;<br>
+                &nbsp;&nbsp;}<br>
+                }
+            </div>
+            <p><b>คำแนะนำ:</b> อย่าซ้อนกันเกิน 3 ชั้นนะเพื่อน! เพราะประสิทธิภาพจะลดลงอย่างรวดเร็ว (Time Complexity: $O(n^2)$ หรือมากกว่า) ถ้าต้องซ้อนเยอะขนาดนั้น นายอาจจะต้องลองหาวิธีเขียนแบบใหม่ดู</p>
+        `,
+        right: `
+            <h2>8. ทดลองเขียน PHP Loop</h2>
+            <p>มาลองฝึกฝีมือกันหน่อย! ลองใช้ <b>For Loop</b> สร้างแม่สูตรคูณง่ายๆ หรือวนแสดงเลขคู่ออกมาดูครับ</p>
+            <textarea id="editor" spellcheck="false" oninput="updatePreview()">
+<?php
+// ลองเปลี่ยนตัวเลขในเงื่อนไขดูนะ
+for ($i = 1; $i <= 5; $i++) {
+    echo "Line $i: ลุยเรียน PHP สนุกจัง! <br>";
+}
+
+$fruits = ["Apple", "Banana", "Cherry"];
+foreach ($fruits as $f) {
+    echo "ฉันชอบกิน $f <br>";
+}
+?>
+            </textarea>
+            <h4 class="mt-3">ผลลัพธ์ (Virtual Console):</h4>
+            <div id="live-preview">
+                </div>
+            <div class="tip-box" style="background: #e8f5e9; border-color: #2e7d32; margin-top:15px;">
+                 <i class="bi bi-award-fill"></i> <b>Congrats!</b> นายเข้าใจพื้นฐาน Loops แล้ว! หน่วยถัดไปเตรียมพบกับ Unit 05: Functions & Scope ได้เลย!
+            </div>
+        `
+    }
+];
+
+    let currentPage = 0;
+    let isOpen = false;
+
+    document.getElementById('totalPage').innerText = content.length;
+
+    function openBook() {
+        if (isOpen) return;
+        isOpen = true;
+        document.getElementById('wrapper').classList.add('is-open');
+        document.getElementById('bookCover').classList.add('opened');
+        setTimeout(renderPage, 300);
+    }
+
+    function renderPage() {
+        const set = content[currentPage];
+        const left = document.getElementById('left-page');
+        const right = document.getElementById('right-page');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        left.style.opacity = 0;
+        right.style.opacity = 0;
+        
+        setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+              if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป</span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'php 5.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+        }, 150);
+    }
+
+    function changePage(step) {
+        if (currentPage + step >= 0 && currentPage + step < content.length) {
+            currentPage += step;
+            renderPage();
+        }
+    }
+
+    function updatePreview() {
+        const code = document.getElementById('editor').value;
+        const preview = document.getElementById('live-preview');
+        if(preview) {
+            // จำลองการทำงานของ PHP แบบง่าย
+            let output = code.replace(/<\?php|<\?>/g, '');
+            output = output.replace(/echo\s+"(.*?)";/g, '$1');
+            output = output.replace(/echo\s+\$i;/g, ' (Loop Variable) ');
+            // หมายเหตุ: นี่คือการจำลองการแสดงผลเบื้องต้นเพื่อให้เห็นภาพ
+            preview.innerHTML = "<b>[System Output]:</b><br>" + output.replace(/\n/g, '<br>');
+        }
+    }
+</script>
+</body>
+</html>

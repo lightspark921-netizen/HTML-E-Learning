@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Unit 05 - Arrays & Functions</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #fdfcf0;
+            --ink: #2b2d42;
+            --php-purple: #777bb3;
+            --dark-purple: #474a8a;
+            --accent-cyan: #00d4ff;
+            --desk: #cbd5e1;
+            --preview-bg: #ffffff;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 800px;
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-wrapper.is-open { width: 1200px; }
+
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: linear-gradient(135deg, var(--php-purple), var(--dark-purple)); left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid #2e3152; box-shadow: 15px 0 50px rgba(0,0,0,0.3);
+            cursor: pointer; backface-visibility: hidden;
+            overflow: hidden;
+        }
+
+        /* ตกแต่งลายหน้าปกเพิ่มเติม */
+        .book-cover::before {
+            content: "<?php"; position: absolute; top: 20px; left: 30px; font-family: 'Fira Code'; font-size: 2rem; opacity: 0.2;
+        }
+        .book-cover::after {
+            content: "?>"; position: absolute; bottom: 20px; right: 30px; font-family: 'Fira Code'; font-size: 2rem; opacity: 0.2;
+        }
+
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        .notebook {
+            position: absolute; width: 1200px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { 
+            flex: 1; padding: 40px 50px; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+        }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--dark-purple); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; font-weight: 700; font-size: 1.6rem; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: var(--ink); margin-top: 20px; font-weight: 700; border-left: 4px solid var(--php-purple); padding-left: 10px; font-size: 1.1rem; }
+        p { line-height: 1.7; font-size: 0.95rem; color: #333; margin-bottom: 1rem; text-indent: 20px; }
+
+        .code-block { 
+            background: #2d2d2d; color: #f8f8f2; padding: 18px; 
+            border-radius: 10px; font-family: 'Fira Code', monospace; 
+            font-size: 0.85rem; margin: 15px 0; border-left: 5px solid var(--accent-cyan);
+            line-height: 1.5; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .php-tag { color: #ff79c6; }
+        .php-var { color: #50fa7b; }
+        .php-func { color: #8be9fd; }
+        .php-str { color: #f1fa8c; }
+
+        .tip-box { background: #f0f4ff; border-radius: 8px; padding: 15px; border-left: 5px solid var(--php-purple); margin: 20px 0; font-size: 0.9rem; line-height: 1.6; }
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; border-top: 1px solid #eee; border-radius: 0 0 20px 5px; z-index: 10;
+        }
+
+        .btn-nav { background: var(--ink); color: white; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; transition: 0.3s; font-size: 0.9rem; }
+        .btn-nav:hover:not(:disabled) { background: var(--php-purple); transform: translateY(-2px); }
+        .btn-next-chapter { background: #8e44ad; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+         <div style="width:140px; height:140px; background:rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.5); border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px; backdrop-filter: blur(5px);">
+            <i class="bi bi-cpu-fill" style="font-size:4.5rem; color:white"></i>
+        </div>
+        <h1 class="display-4 fw-bold" style="font-family: 'Chakra Petch'; text-shadow: 2px 2px 10px rgba(0,0,0,0.3);">PHP 8.x</h1>
+        <p class="lead" style="letter-spacing: 3px; font-weight: 300;">BACKEND DEVELOPMENT</p>
+        <div style="width: 100px; height: 2px; background: var(--accent-cyan); margin: 20px 0;"></div>
+        <h5 class="fw-bold">UNIT 05: ARRAYS & FUNCTIONS</h5>
+        <p class="small opacity-75">การจัดการข้อมูลชุดและตรรกะขั้นสูง</p>
+        <div class="mt-4 small opacity-50"><i class="bi bi-mouse3"></i> Click to initialize script</div>
+    </div>
+
+    <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+                <button class="btn-nav" style="background:#64748b" onclick="window.location.href='course_php.html'"><i class="bi bi-house">เลือกบทเรียน</i></button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            <div class="fw-bold text-muted">หน้า <span id="pageNum">1</span> / <span id="totalPage">8</span></div>
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>ถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const content = [
+    {
+        left: `
+            <h2>1. พลังของ PHP Arrays</h2>
+            <p>ในโลกของ PHP <b>Array</b> ไม่ใช่แค่ที่เก็บข้อมูลเรียงต่อกัน แต่มันคือโครงสร้างข้อมูลที่ทรงพลังที่สุดชนิดหนึ่ง นายสามารถเก็บตัวแปรหลายตัวไว้ในชื่อเดียวได้ ไม่ว่าจะเป็นตัวเลข ข้อความ หรือแม้แต่ Array ซ้อน Array</p>
+            <h4>ทำไมต้องใช้ Array?</h4>
+            <p>ลองจินตนาการว่านายต้องเก็บชื่อสินค้า 100 ชิ้น ถ้าไม่มี Array นายต้องสร้างตัวแปร $p1, $p2... ไปเรื่อยๆ ซึ่งมันคือนรกของคนเขียนโค้ดชัดๆ Array จึงเข้ามาช่วยบริหารจัดการข้อมูลจำนวนมากให้เป็นระเบียบและวนลูปใช้งานได้ง่าย</p>
+            <div class="tip-box">
+                <i class="bi bi-info-circle"></i> <b>Did you know?</b> ใน PHP 8 นายสามารถเขียน Array แบบสั้นด้วย <code>[]</code> แทนคำว่า <code>array()</code> ได้แล้วนะ ซึ่งเป็นมาตรฐานที่ดูทันสมัยกว่ามาก
+            </div>
+            <p>กฎเหล็กที่ต้องจำคือ <b>Index ของ Array เริ่มต้นที่ 0 เสมอ</b> หากนายมีข้อมูล 3 ตัว ตัวสุดท้ายจะมีเลขตำแหน่งคือ 2 ไม่ใช่ 3 จำจุดนี้ไว้ให้ดีเพราะบั๊กส่วนใหญ่เกิดจากตรงนี้แหละ</p>
+        `,
+        right: `
+            <h4>การประกาศใช้งาน (Indexed Array)</h4>
+            <p>นี่คือรูปแบบที่เบสิกที่สุด คือการเก็บข้อมูลเรียงต่อกันไปตามลำดับตัวเลข</p>
+            <div class="code-block">
+                <span class="php-var">$colors</span> = [<span class="php-str">"Red"</span>, <span class="php-str">"Green"</span>, <span class="php-str">"Blue"</span>];<br>
+                <span class="php-tag">echo</span> <span class="php-var">$colors</span>[0]; <span class="text-muted">// ผลลัพธ์: Red</span>
+            </div>
+            <h4>การนับจำนวนข้อมูล</h4>
+            <p>เรามักจะใช้ฟังก์ชัน <code>count()</code> เพื่อตรวจสอบว่าใน Array ของเรามีข้อมูลอยู่ทั้งหมดกี่ตัว เพื่อนำไปใช้ต่อในคำสั่ง for หรือ while loop</p>
+            <div class="code-block">
+                <span class="php-tag">echo</span> <span class="php-func">count</span>(<span class="php-var">$colors</span>); <span class="text-muted">// ผลลัพธ์: 3</span>
+            </div>
+            <p>นอกจากนี้ PHP ยังใจดีเตรียมฟังก์ชันอำนวยความสะดวกมาให้เพียบ เช่น <code>sort()</code> เพื่อเรียงข้อมูล หรือ <code>array_push()</code> เพื่อเพิ่มข้อมูลต่อท้ายแบบง่ายๆ โดยที่เราไม่ต้องระบุ Index เองเลย</p>
+        `
+    },
+    {
+        left: `
+            <h2>2. Associative Arrays</h2>
+            <p>นี่คือจุดที่ PHP โดดเด่น! <b>Associative Array</b> คือการที่เราสามารถกำหนดชื่อ (Key) ให้กับข้อมูลแต่ละตัวได้ แทนที่จะใช้ตัวเลข 0, 1, 2 แบบเดิม</p>
+            <h4>โครงสร้างแบบ Key => Value</h4>
+            <p>ให้นายมองว่ามันคือ "พจนานุกรม" ที่เราเอาคำค้น (Key) ไปแลกกับคำอธิบาย (Value) ซึ่งทำให้โค้ดของเราอ่านง่ายขึ้นมาก เพราะเรารู้ทันทีว่าข้อมูลนั้นคืออะไร</p>
+            <div class="code-block">
+                <span class="php-var">$student</span> = [<br>
+                &nbsp;&nbsp;<span class="php-str">"name"</span> => <span class="php-str">"Somchai"</span>,<br>
+                &nbsp;&nbsp;<span class="php-str">"age"</span> => 25,<br>
+                &nbsp;&nbsp;<span class="php-str">"grade"</span> => <span class="php-str">"A"</span><br>
+                ];
+            </div>
+            <p>การเข้าถึงข้อมูลก็แค่ระบุ Key ในเครื่องหมาย bracket เช่น <code>$student["name"]</code> นายก็จะได้ค่า "Somchai" ออกมาทันที</p>
+        `,
+        right: `
+            <h4>การวนลูปด้วย Foreach</h4>
+            <p>เมื่อใช้ Associative Array คู่หูที่ขาดไม่ได้เลยคือ <code>foreach</code> ซึ่งออกแบบมาเพื่อกวาดข้อมูลใน Array โดยเฉพาะ</p>
+            <div class="code-block">
+                <span class="php-tag">foreach</span> (<span class="php-var">$student</span> <span class="php-tag">as</span> <span class="php-var">$key</span> => <span class="php-var">$value</span>) {<br>
+                &nbsp;&nbsp;<span class="php-tag">echo</span> <span class="php-var">$key</span> . <span class="php-str">": "</span> . <span class="php-var">$value</span>;<br>
+                }
+            </div>
+            <p>วิธีนี้จะช่วยให้นายดึงทั้ง "ชื่อหัวข้อ" และ "ข้อมูล" ออกมาแสดงผลพร้อมกันได้ภายในคำสั่งเดียว เหมาะมากสำหรับการสร้างตารางข้อมูลหรือการดึงค่าจาก Database</p>
+            <div class="tip-box">
+                <b>Pro Tip:</b> ชื่อ Key ใน PHP นั้น Case-sensitive นะครับ <code>$arr["Name"]</code> กับ <code>$arr["name"]</code> ถือว่าเป็นคนละตัวกัน ระวังพิมพ์ผิดล่ะ!
+            </div>
+        `
+    },
+    {
+        left: `
+            <h2>3. Multi-dimensional Arrays</h2>
+            <p>ถ้า Array ชั้นเดียวมันยังเก็บข้อมูลได้ไม่จุใจ PHP ให้เราสร้าง <b>Array ซ้อน Array</b> ได้ไม่จำกัดชั้น ซึ่งเราเรียกมันว่า Array หลายมิติ</p>
+            <h4>การประยุกต์ใช้งานจริง</h4>
+            <p>นึกถึงตาราง Excel ที่มีทั้งแถวและคอลัมน์ หรือรายการสินค้าที่มีรายละเอียดซับซ้อน มิติแรกอาจจะเป็นลำดับสินค้า ส่วนมิติที่สองคือคุณสมบัติของสินค้านั้นๆ</p>
+            <div class="code-block">
+                <span class="php-var">$cars</span> = [<br>
+                &nbsp;&nbsp;[<span class="php-str">"Volvo"</span>, 22, 18],<br>
+                &nbsp;&nbsp;[<span class="php-str">"BMW"</span>, 15, 13],<br>
+                &nbsp;&nbsp;[<span class="php-str">"Saab"</span>, 5, 2]<br>
+                ];
+            </div>
+            <p>การดึงข้อมูลต้องระบุพิกัดสองชั้น เช่น <code>$cars[0][0]</code> จะหมายถึงแถวแรก คอลัมน์แรก (นั่นคือ Volvo)</p>
+        `,
+        right: `
+            <h4>ซ้อนกันให้สุดทาง</h4>
+            <p>เราสามารถผสมผสาน Indexed และ Associative เข้าด้วยกันได้ เพื่อสร้างโครงสร้างข้อมูลที่ซับซ้อนแต่ทรงพลัง</p>
+            <div class="code-block">
+                <span class="php-var">$inventory</span> = [<br>
+                &nbsp;&nbsp;<span class="php-str">"Fruit"</span> => [<span class="php-str">"Apple"</span>, <span class="php-str">"Banana"</span>],<br>
+                &nbsp;&nbsp;<span class="php-str">"Drink"</span> => [<span class="php-str">"Coke"</span>, <span class="php-str">"Water"</span>]<br>
+                ];
+            </div>
+            <p>ในการเขียนโปรแกรมระดับสูง (เช่น การรับค่า API แบบ JSON) นายจะเจอข้อมูลหน้าตาแบบนี้ตลอดเวลา ดังนั้นฝึกไล่ลำดับ Array ให้คล่องเข้าไว้</p>
+            <div class="tip-box" style="background: #fff3cd;">
+                <i class="bi bi-exclamation-triangle"></i> <b>Warning:</b> อย่าซ้อน Array เยอะเกินความจำเป็น (เกิน 3-4 ชั้น) เพราะจะทำให้โค้ดอ่านยากและจัดการหน่วยความจำได้แย่ลง
+            </div>
+        `
+    },
+    {
+        left: `
+            <h2>4. พื้นฐานการสร้าง Function</h2>
+            <p><b>Function</b> คือกลุ่มของคำสั่งที่เราตั้งชื่อไว้ เพื่อให้สามารถเรียกใช้งานซ้ำๆ ได้ทุกที่ในโปรแกรมโดยไม่ต้องเขียนโค้ดเดิมซ้ำใหม่ (Don't Repeat Yourself - DRY)</p>
+            <h4>โครงสร้างของฟังก์ชัน</h4>
+            <p>เราเริ่มด้วยคีย์เวิร์ด <code>function</code> ตามด้วยชื่อที่สื่อความหมาย และวงเล็บ <code>()</code> สำหรับรับค่า</p>
+            <div class="code-block">
+                <span class="php-tag">function</span> <span class="php-func">sayHello</span>() {<br>
+                &nbsp;&nbsp;<span class="php-tag">echo</span> <span class="php-str">"สวัสดีชาวโลก!"</span>;<br>
+                }
+            </div>
+            <p>ฟังก์ชันจะไม่ทำงานจนกว่าเราจะ "เรียกชื่อ" มัน เช่น <code>sayHello();</code> การทำแบบนี้ช่วยให้โค้ดของเราสะอาดและแบ่งสัดส่วนการทำงานได้ชัดเจนเหมือนการต่อเลโก้</p>
+        `,
+        right: `
+            <h4>กฎการตั้งชื่อฟังก์ชัน</h4>
+            <ul>
+                <li>ต้องเริ่มต้นด้วยตัวอักษรหรือ underscore (_) เท่านั้น</li>
+                <li><b>ห้าม</b> ขึ้นต้นด้วยตัวเลข</li>
+                <li>ห้ามซ้ำกับชื่อฟังก์ชันมาตรฐานของ PHP (เช่น count, echo)</li>
+                <li>ควรตั้งชื่อแบบ camelCase เช่น <code>calculateTotalAmount()</code></li>
+            </ul>
+            <div class="tip-box">
+                <i class="bi bi-lightbulb"></i> <b>Logic:</b> ลองแบ่งหน้าที่ของเว็บออกเป็นฟังก์ชันย่อยๆ เช่น <code>checkLogin()</code>, <code>uploadImage()</code> จะทำให้ชีวิตการเขียนโค้ดง่ายขึ้นเยอะ!
+            </div>
+            <p>ข้อดีอีกอย่างคือถ้ามีจุดที่ต้องแก้ไข นายแค่ไปแก้ที่ตัวฟังก์ชันที่เดียว ทุกที่ที่เรียกใช้ก็จะอัปเดตตามทันที ประหยัดเวลาไปได้มหาศาล</p>
+        `
+    },
+    {
+        left: `
+            <h2>5. Arguments & Parameters</h2>
+            <p>ฟังก์ชันจะฉลาดขึ้นมากถ้านายสามารถส่ง "วัตถุดิบ" เข้าไปประมวลผลได้ เราเรียกสิ่งที่ส่งเข้าไปนี้ว่า <b>Arguments</b></p>
+            <h4>การรับส่งค่า</h4>
+            <p>นายสามารถระบุตัวแปรไว้ในวงเล็บตอนสร้างฟังก์ชัน เพื่อเตรียมรอรับค่าจากภายนอกเข้ามาใช้งาน</p>
+            <div class="code-block">
+                <span class="php-tag">function</span> <span class="php-func">greet</span>(<span class="php-var">$name</span>) {<br>
+                &nbsp;&nbsp;<span class="php-tag">echo</span> <span class="php-str">"สวัสดีคุณ "</span> . <span class="php-var">$name</span>;<br>
+                }<br>
+                <span class="php-func">greet</span>(<span class="php-str">"สมปอง"</span>);
+            </div>
+            <p>นายสามารถส่งค่าไปกี่ตัวก็ได้ แค่คั่นด้วยเครื่องหมายคอมม่า (,) และลำดับการส่งต้องตรงกับลำดับที่ฟังก์ชันประกาศไว้ด้วยนะ</p>
+        `,
+        right: `
+            <h4>Default Argument Values</h4>
+            <p>บางครั้งเราอยากให้ฟังก์ชันทำงานได้แม้คนเรียกจะลืมส่งค่ามาให้ เราสามารถกำหนด "ค่าเริ่มต้น" ไว้ก่อนได้เลย</p>
+            <div class="code-block">
+                <span class="php-tag">function</span> <span class="php-func">setVolume</span>(<span class="php-var">$level</span> = 50) {<br>
+                &nbsp;&nbsp;<span class="php-tag">echo</span> <span class="php-str">"Volume is: "</span> . <span class="php-var">$level</span>;<br>
+                }
+            </div>
+            <p>ถ้าเรียก <code>setVolume();</code> เฉยๆ มันจะใช้ค่า 50 ทันที แต่ถ้าเรียก <code>setVolume(100);</code> มันก็จะใช้ค่า 100 ตามที่เราสั่ง</p>
+            <div class="tip-box">
+                <b>PHP 8 Feature:</b> ตอนนี้เรามี "Named Arguments" แล้วนะ นายสามารถระบุชื่อตัวแปรตอนส่งค่าได้เลย เช่น <code>greet(name: "A")</code> ทำให้ไม่สับสนเรื่องลำดับตัวแปรอีกต่อไป
+            </div>
+        `
+    },
+    {
+        left: `
+            <h2>6. Return Values (การคืนค่า)</h2>
+            <p>ฟังก์ชันที่ดีไม่ควรแค่แสดงผลออกหน้าจอ (echo) อย่างเดียว แต่มันควรจะสามารถ <b>"ส่งค่ากลับมา"</b> เพื่อให้นำไปคำนวณต่อได้</p>
+            <h4>คำสั่ง Return</h4>
+            <p>เมื่อ PHP เจอคำสั่ง <code>return</code> มันจะหยุดทำงานในฟังก์ชันนั้นทันทีและคายค่ากลับออกมายังจุดที่เรียกใช้</p>
+            <div class="code-block">
+                <span class="php-tag">function</span> <span class="php-func">add</span>(<span class="php-var">$a</span>, <span class="php-var">$b</span>) {<br>
+                &nbsp;&nbsp;<span class="php-tag">return</span> <span class="php-var">$a</span> + <span class="php-var">$b</span>;<br>
+                }<br>
+                <span class="php-var">$sum</span> = <span class="php-func">add</span>(10, 20);
+            </div>
+            <p>ตอนนี้ตัวแปร <code>$sum</code> จะมีค่าเป็น 30 นายจะเอาไปบวกต่อ หรือบันทึกลงฐานข้อมูลก็ได้ตามใจชอบ</p>
+        `,
+        right: `
+            <h4>Type Declaration (PHP 7/8+)</h4>
+            <p>เพื่อลดความผิดพลาด เราควรกำหนดไปเลยว่าฟังก์ชันนี้จะรับค่าเป็นอะไร และส่งคืนค่าเป็นอะไร</p>
+            <div class="code-block">
+                <span class="php-tag">function</span> <span class="php-func">isAdult</span>(<span class="php-tag">int</span> <span class="php-var">$age</span>): <span class="php-tag">bool</span> {<br>
+                &nbsp;&nbsp;<span class="php-tag">return</span> <span class="php-var">$age</span> >= 18;<br>
+                }
+            </div>
+            <p>การระบุแบบนี้ช่วยให้ Debug ง่ายขึ้นมาก เพราะถ้าใครส่งตัวอักษรเข้าไปในช่องอายุ PHP จะแจ้งเตือนทันทีว่าทำงานผิดพลาด</p>
+            <div class="tip-box">
+                <b>Remember:</b> คำสั่งที่เขียนไว้หลัง <code>return</code> จะไม่มีวันถูกรัน (Dead code) เพราะโปรแกรมได้กระโดดออกจากฟังก์ชันไปแล้ว
+            </div>
+        `
+    },
+    {
+        left: `
+            <h2>7. Variable Scope & Global</h2>
+            <p>เรื่องนี้สำคัญมาก! ตัวแปรที่สร้างในฟังก์ชันจะ "มองไม่เห็น" จากภายนอก และในทางกลับกัน ฟังก์ชันก็มองไม่เห็นตัวแปรข้างนอกเช่นกัน เราเรียกสิ่งนี้ว่า <b>Scope</b></p>
+            <h4>Local vs Global</h4>
+            <p>มันคือระบบรักษาความปลอดภัยป้องกันไม่ให้ชื่อตัวแปรตีกัน แต่ถ้านายจำเป็นต้องเข้าถึงตัวแปรข้างนอกจริงๆ ต้องใช้คีย์เวิร์ด <code>global</code></p>
+            <div class="code-block">
+                <span class="php-var">$x</span> = 5;<br>
+                <span class="php-tag">function</span> <span class="php-func">myTest</span>() {<br>
+                &nbsp;&nbsp;<span class="php-tag">global</span> <span class="php-var">$x</span>;<br>
+                &nbsp;&nbsp;<span class="php-tag">echo</span> <span class="php-var">$x</span>;<br>
+                }
+            </div>
+            <p>แต่ในทางปฏิบัติ การใช้ <code>global</code> พร่ำเพรื่อคือสัญญาณของการเขียนโค้ดที่ไม่ดี (Spaghetti Code)</p>
+        `,
+        right: `
+            <h4>Static Variables</h4>
+            <p>ปกติเมื่อฟังก์ชันทำงานเสร็จ ตัวแปรข้างในจะถูกทำลายทิ้ง แต่ถ้าเราอยากให้มัน "จำ" ค่าเดิมไว้ได้ในการเรียกครั้งต่อไป เราจะใช้ <code>static</code></p>
+            <div class="code-block">
+                <span class="php-tag">function</span> <span class="php-func">counter</span>() {<br>
+                &nbsp;&nbsp;<span class="php-tag">static</span> <span class="php-var">$count</span> = 0;<br>
+                &nbsp;&nbsp;<span class="php-var">$count</span>++;<br>
+                &nbsp;&nbsp;<span class="php-tag">echo</span> <span class="php-var">$count</span>;<br>
+                }
+            </div>
+            <p>ถ้าเรียก <code>counter()</code> 3 ครั้ง ผลลัพธ์จะเป็น 1, 2, 3 ตามลำดับ ซึ่งมีประโยชน์มากในการทำระบบลำดับคิวหรือนับรอบการทำงาน</p>
+            <div class="tip-box">
+                <b>Best Practice:</b> ควรส่งค่าเข้าฟังก์ชันผ่าน Arguments และรับค่าออกผ่าน Return เสมอ แทนการใช้ตัวแปร Global เพื่อความปลอดภัยของข้อมูล
+            </div>
+        `
+    },
+    {
+        left: `
+            <h2>8. Anonymous & Arrow Functions</h2>
+            <p>ใน PHP ยุคใหม่ นายไม่จำเป็นต้องตั้งชื่อให้ทุกฟังก์ชันก็ได้! เราเรียกมันว่า <b>Anonymous Function</b> (ฟังก์ชันนิรนาม)</p>
+            <h4>ฟังก์ชันในฐานะตัวแปร</h4>
+            <p>เราสามารถจับฟังก์ชันใส่ลงในตัวแปร และส่งมันไปมาเหมือนข้อมูลปกติได้เลย</p>
+            <div class="code-block">
+                <span class="php-var">$greet</span> = <span class="php-tag">function</span>(<span class="php-var">$name</span>) {<br>
+                &nbsp;&nbsp;<span class="php-tag">return</span> <span class="php-str">"Hi "</span> . <span class="php-var">$name</span>;<br>
+                };<br>
+                <span class="php-tag">echo</span> <span class="php-var">$greet</span>(<span class="php-str">"PHP"</span>);
+            </div>
+            <h4>Arrow Functions (PHP 7.4+)</h4>
+            <p>ถ้าฟังก์ชันมันสั้นมาก นายสามารถย่อให้เหลือบรรทัดเดียวได้ด้วยรูปแบบ <code>fn() =></code></p>
+            <div class="code-block">
+                <span class="php-var">$y</span> = 10;<br>
+                <span class="php-var">$fn</span> = <span class="php-tag">fn</span>(<span class="php-var">$x</span>) => <span class="php-var">$x</span> + <span class="php-var">$y</span>;
+            </div>
+        `,
+        right: `
+            <h4>บทสรุปส่งท้าย</h4>
+            <p>ยินดีด้วยนาย! ตอนนี้พื้นฐานการจัดการข้อมูลและการสร้างตรรกะของนายแข็งแกร่งขึ้นมากแล้ว สรุปสิ่งที่นายต้องจำให้ขึ้นใจคือ:</p>
+            <ul>
+                <li>Array คือตู้เก็บของที่มีทั้งแบบเลข (Indexed) และชื่อ (Associative)</li>
+                <li>Function คือเครื่องจักรที่รับวัตถุดิบ (Arguments) และส่งออกชิ้นงาน (Return)</li>
+                <li>ความสะอาดของโค้ดเริ่มต้นที่การแบ่ง Scope ให้ชัดเจน</li>
+            </ul>
+            <div class="tip-box" style="background: #d4edda; border-color: #27ae60;">
+                <i class="bi bi-star-fill text-warning"></i> <b>Congratulations!</b><br>
+                นายเรียนจบ Unit 05 แล้ว ความลับของ Backend Developer อยู่ในมือนายแล้วล่ะ!
+            </div>
+            <p>ในบทต่อไป เราจะเอาความรู้เรื่อง Arrays และ Functions ไปเชื่อมต่อกับ <b>MySQL Database</b> เพื่อสร้างระบบที่ทำงานได้จริงกัน!</p>
+        `
+    }
+];
+
+    let currentPage = 0;
+    let isOpen = false;
+
+    document.getElementById('totalPage').innerText = content.length;
+
+    function openBook() {
+        if (isOpen) return;
+        isOpen = true;
+        document.getElementById('wrapper').classList.add('is-open');
+        document.getElementById('bookCover').classList.add('opened');
+        setTimeout(renderPage, 300);
+    }
+
+    function renderPage() {
+        const set = content[currentPage];
+        const left = document.getElementById('left-page');
+        const right = document.getElementById('right-page');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        left.style.opacity = 0;
+        right.style.opacity = 0;
+        
+        setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+              if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป</span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'php 6.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+        }, 150);
+    }
+
+    function changePage(step) {
+        if (currentPage + step >= 0 && currentPage + step < content.length) {
+            currentPage += step;
+            renderPage();
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนที่ 2 - HTML Lists Complete Notebook</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #f8f9fa;
+            --ink: #1e1b4b;
+            --list-primary: #6366f1; /* เปลี่ยนเป็นสี Indigo สำหรับเรื่อง Lists */
+            --list-dark: #4338ca;
+            --desk: #cbd5e1;
+            --preview-bg: #ffffff;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh; 
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 800px;
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-wrapper.is-open { width: 1200px; }
+
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: var(--list-primary); left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid var(--list-dark); box-shadow: 15px 0 50px rgba(0,0,0,0.3);
+            cursor: pointer; backface-visibility: hidden;
+        }
+
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        .notebook {
+            position: absolute; width: 1200px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { 
+            flex: 1; padding: 40px 60px; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+        }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--list-primary); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; font-weight: 700; font-size: 1.6rem; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: var(--ink); margin-top: 20px; font-weight: 700; border-left: 4px solid var(--list-primary); padding-left: 10px; font-size: 1.1rem; }
+        p { line-height: 1.6; font-size: 0.95rem; color: #333; margin-bottom: 1rem; }
+
+        .code-block { 
+            background: #282c34; color: #abb2bf; padding: 15px; 
+            border-radius: 10px 10px 0 0; font-family: 'Consolas', monospace; 
+            font-size: 0.8rem; margin-top: 15px; border-left: 5px solid var(--list-primary);
+            line-height: 1.4;
+        }
+        .preview-label { background: #eef2ff; color: #4338ca; font-size: 0.75rem; padding: 4px 12px; font-weight: bold; border-left: 5px solid var(--list-primary); }
+        .code-preview { background: var(--preview-bg); border: 1px solid #ddd; padding: 15px; border-radius: 0 0 10px 10px; margin-bottom: 20px; }
+
+        .tag { color: #e06c75; } .attr { color: #d19a66; } .val { color: #98c379; }
+
+        .tip-box { background: #f5f3ff; border-radius: 8px; padding: 12px; border-left: 5px solid var(--list-primary); margin: 15px 0; font-size: 0.85rem; }
+        .tag-badge { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-weight: bold; color: var(--list-dark); font-size: 0.85rem; }
+
+        #editor { width: 100%; height: 200px; font-family: monospace; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #fff; margin-bottom: 10px; }
+        #live-preview { width: 100%; height: 250px; background: white; border: 2px dashed #bbb; border-radius: 8px; padding: 10px; overflow: auto; }
+
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; border-top: 1px solid #eee; border-radius: 0 0 20px 5px; z-index: 10;
+        }
+
+        .btn-nav { background: var(--ink); color: white; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; transition: 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        .btn-nav:hover:not(:disabled) { background: var(--list-primary); transform: translateY(-2px); color: white; }
+        .btn-menu { background: #f8f9fa; color: var(--ink); border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+         <div style="width:130px; height:130px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+            <i class="bi bi-list-check" style="font-size:4.5rem; color:var(--list-primary)"></i>
+        </div>
+        <h1 class="display-4 fw-bold" style="font-family: 'Chakra Petch';">HTML5</h1>
+        <p class="lead">MASTERING LISTS</p>
+        <div style="width: 70px; height: 4px; background: white; margin: 20px 0; border-radius: 2px;"></div>
+        <h5 class="fw-bold">UNIT 02: การสร้างรายการ</h5>
+        <p class="small opacity-75">จัดระเบียบเนื้อหาให้เป็นระบบด้วย Tags</p>
+        <div class="mt-4 small opacity-75 animate-bounce"><i class="bi bi-hand-index-thumb"></i> คลิกเพื่อเปิดสมุดบันทึก</div>
+    </div>
+
+    <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+                  <button class="btn-nav btn-menu" onclick="window.location.href='lesson-html.html'">
+                    <i class="bi bi-grid-fill"></i> เลือกบทเรียน
+                </button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            
+            <div class="fw-bold text-muted small">หน้า <span id="pageNum">1</span> / <span id="totalPage"></span></div>
+            
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const content = [
+        {
+            left: `
+                <h2>1. ความสำคัญของ Lists</h2>
+                <p>การใช้ List ใน HTML ไม่ใช่แค่การใส่จุดหรือตัวเลขหน้าข้อความ แต่เป็นการบอกเบราว์เซอร์ว่า <b>"ข้อมูลเหล่านี้มีความสัมพันธ์กัน"</b></p>
+                <h4>ประโยชน์ของ Lists:</h4>
+                <ul>
+                    <li><b>Readability:</b> ช่วยให้ผู้อ่านสแกนเนื้อหาได้ง่ายขึ้น</li>
+                    <li><b>SEO:</b> Search Engine เข้าใจโครงสร้างข้อมูลได้ดีกว่าข้อความธรรมดา</li>
+                    <li><b>Navigation:</b> เมนูส่วนใหญ่บนเว็บถูกสร้างมาจาก Lists</li>
+                </ul>
+                <div class="tip-box">
+                    <i class="bi bi-info-circle"></i> ทุกรายการใน List จะต้องถูกหุ้มด้วยแท็ก <span class="tag-badge">&lt;li&gt;</span> (List Item) เสมอ
+                </div>
+            `,
+            right: `
+                <h2>2. ประเภทของ Lists</h2>
+                <p>ใน HTML เรามีรายการหลักๆ อยู่ 3 ประเภทให้เลือกใช้ตามความเหมาะสม:</p>
+                <div class="tip-box">
+                    <b>1. Unordered List (&lt;ul&gt;):</b> รายการที่ไม่มีลำดับความสำคัญ (ใช้จุด Bullet) <br><br>
+                    <b>2. Ordered List (&lt;ol&gt;):</b> รายการที่ต้องการเรียงลำดับ (ใช้ 1, 2, 3...) <br><br>
+                    <b>3. Description List (&lt;dl&gt;):</b> รายการคำศัพท์และคำอธิบาย
+                </div>
+                <p>เดี๋ยวเราจะไปเจาะลึกแต่ละประเภทในหน้าถัดไปกันครับ!</p>
+            `
+        },
+        {
+            left: `
+                <h2>3. Unordered List (&lt;ul&gt;)</h2>
+                <p>ใช้สำหรับรายการที่ "สลับที่กันได้" โดยไม่มีผลต่อใจความสำคัญ</p>
+                <div class="code-block">
+                    <span class="tag">&lt;ul&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>HTML<span class="tag">&lt;/li&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>CSS<span class="tag">&lt;/li&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>JS<span class="tag">&lt;/li&gt;</span><br>
+                    <span class="tag">&lt;/ul&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    <ul style="margin:0;"><li>HTML</li><li>CSS</li><li>JS</li></ul>
+                </div>
+            `,
+            right: `
+                <h2>4. Ordered List (&lt;ol&gt;)</h2>
+                <p>ใช้สำหรับรายการที่ "ต้องเรียงลำดับ" เช่น ขั้นตอนการทำอาหาร</p>
+                <div class="code-block">
+                    <span class="tag">&lt;ol&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>เตรียมวัตถุดิบ<span class="tag">&lt;/li&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>ลงมือทำ<span class="tag">&lt;/li&gt;</span><br>
+                    <span class="tag">&lt;/ol&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    <ol style="margin:0;"><li>เตรียมวัตถุดิบ</li><li>ลงมือทำ</li></ol>
+                </div>
+                <p><b>Tips:</b> สามารถใช้ Attribute <span class="tag-badge">type="A"</span> เพื่อเปลี่ยนจากตัวเลขเป็นตัวอักษรได้</p>
+            `
+        },
+        {
+            left: `
+                <h2>5. Nesting Lists (การซ้อน)</h2>
+                <p>นายสามารถนำ List หนึ่งไปซ้อนในอีก List หนึ่งได้ เพื่อสร้างหัวข้อย่อย</p>
+                <div class="code-block" style="font-size:0.75rem;">
+                    <span class="tag">&lt;ul&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>ผลไม้<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;ul&gt;</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>แอปเปิ้ล<span class="tag">&lt;/li&gt;</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;/ul&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;/li&gt;</span><br>
+                    <span class="tag">&lt;/ul&gt;</span>
+                </div>
+            `,
+            right: `
+                <div class="preview-label">ผลลัพธ์การซ้อน:</div>
+                <div class="code-preview">
+                    <ul style="margin:0;">
+                        <li>ผลไม้
+                            <ul><li>แอปเปิ้ล</li></ul>
+                        </li>
+                    </ul>
+                </div>
+                <div class="tip-box" style="background: #fff3cd; border-color: #ffc107;">
+                    <i class="bi bi-exclamation-triangle"></i> ระวัง! เมื่อซ้อนกัน แท็ก <span class="tag-badge">&lt;ul&gt;</span> ตัวลูกต้องอยู่ภายในแท็ก <span class="tag-badge">&lt;li&gt;</span> ของตัวแม่เสมอ
+                </div>
+            `
+        },
+        {
+            left: `
+                <h2>6. Description List (&lt;dl&gt;)</h2>
+                <p>ใช้สำหรับรายการที่มีชื่อหัวข้อและคำอธิบาย (พบน้อยกว่าสองแบบแรกแต่มีประโยชน์มาก)</p>
+                <ul>
+                    <li><span class="tag-badge">&lt;dl&gt;</span> : ตัวหุ้มทั้งหมด</li>
+                    <li><span class="tag-badge">&lt;dt&gt;</span> : คำศัพท์ (Description Term)</li>
+                    <li><span class="tag-badge">&lt;dd&gt;</span> : คำอธิบาย (Description Details)</li>
+                </ul>
+            `,
+            right: `
+                <h4>ตัวอย่างการใช้งาน:</h4>
+                <div class="code-block">
+                    <span class="tag">&lt;dl&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;dt&gt;</span>Coffee<span class="tag">&lt;/dt&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;dd&gt;</span>Black hot drink<span class="tag">&lt;/dd&gt;</span><br>
+                    <span class="tag">&lt;/dl&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    <dl style="margin:0;"><dt><b>Coffee</b></dt><dd>Black hot drink</dd></dl>
+                </div>
+            `
+        },
+        {
+            left: `
+                <h2>7. Lists Playground</h2>
+                <p>ลองสร้างเมนูอาหาร หรือรายการสิ่งที่ต้องทำ โดยใช้ทั้ง <span class="tag-badge">ul</span> และ <span class="tag-badge">ol</span> ผสมกันดูครับ!</p>
+                <textarea id="editor" spellcheck="false" oninput="updatePreview()">
+<h3>My To-Do List</h3>
+<ul>
+  <li>เช้า: 
+    <ol>
+      <li>ตื่นนอน</li>
+      <li>วิ่ง</li>
+    </ol>
+  </li>
+  <li>เย็น: พักผ่อน</li>
+</ul></textarea>
+            `,
+            right: `
+                <h4>Live Preview:</h4>
+                <div id="live-preview"></div>
+                <div class="text-center mt-4">
+                     <p class="small text-muted">นายพร้อมที่จะไปบทถัดไปหรือยัง?</p>
+                </div>
+            `
+        }
+    ];
+
+    let currentPage = 0;
+    let isOpen = false;
+
+    document.getElementById('totalPage').innerText = content.length;
+
+    function openBook() {
+        if (isOpen) return;
+        isOpen = true;
+        document.getElementById('wrapper').classList.add('is-open');
+        document.getElementById('bookCover').classList.add('opened');
+        setTimeout(renderPage, 300);
+    }
+
+    function renderPage() {
+        const set = content[currentPage];
+        const left = document.getElementById('left-page');
+        const right = document.getElementById('right-page');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        left.style.opacity = 0;
+        right.style.opacity = 0;
+        
+        setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+           if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป </span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'lesson3.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+        }, 150);
+    }
+
+    function changePage(step) {
+        if (currentPage + step >= 0 && currentPage + step < content.length) {
+            currentPage += step;
+            renderPage();
+        }
+    }
+
+    function updatePreview() {
+        const code = document.getElementById('editor').value;
+        const preview = document.getElementById('live-preview');
+        if(preview) {
+            preview.innerHTML = code;
+        }
+    }
+</script>
+</body>
+</html>

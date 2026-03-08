@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML5 Mastery Quiz - 30 Questions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #e67e22;
+            --success: #27ae60;
+            --bg: #ecf0f1;
+            --white: #ffffff;
+            --gray: #95a5a6;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-card {
+            background: var(--white);
+            width: 95%;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 { font-family: 'Chakra Petch', sans-serif; color: var(--primary); margin-bottom: 10px; }
+        hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
+        
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            margin: 20px 0;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            outline: none;
+            text-align: center;
+        }
+
+        .btn-group { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
+
+        .btn {
+            flex: 1;
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-next { background: var(--primary); color: white; }
+        .btn-next:hover { background: #1a252f; }
+        .btn-prev { background: var(--gray); color: white; }
+        .btn-start { background: var(--accent); color: white; width: 100%; font-size: 1.2rem; }
+        .btn-lesson { background: #3498db; color: white; }
+        
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .question-box { text-align: left; margin-top: 20px; min-height: 320px; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; }
+        
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option:hover { border-color: var(--accent); background: #fffaf5; }
+        .option.selected { border-color: var(--accent); background: var(--accent); color: white; }
+
+        .progress-bar {
+            height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 20px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: var(--accent); width: 0%; transition: 0.3s;
+        }
+        
+        #final-score-val { font-size: 4rem; color: var(--success); font-weight: bold; margin: 10px 0; }
+        .user-tag { color: var(--accent); font-weight: bold; }
+        .result-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div id="start-screen" class="screen active">
+        <h1>HTML5 ULTIMATE QUIZ</h1>
+        <p>บทที่ 1 - 9 (จำนวน 30 ข้อ)</p>
+        <hr>
+        <div style="margin: 30px 0;">
+            <label>ชื่อผู้เข้าสอบ:</label><br>
+            <input type="text" id="username" placeholder="กรุณาใส่ชื่อของคุณ..." autocomplete="off">
+        </div>
+        <button class="btn btn-start" onclick="startQuiz()">เริ่มทำข้อสอบ</button>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">
+            <span>ผู้สอบ: <span class="user-tag" id="display-name"></span></span>
+            <span>ข้อที่ <span id="current-idx">1</span> / 30</span>
+        </div>
+        
+        <div class="question-box">
+            <h3 id="question-text" style="line-height: 1.5;">คำถาม...</h3>
+            <div id="options-list" class="options-grid"></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-prev" id="prev-btn" onclick="prevQuestion()">ย้อนกลับ</button>
+            <button class="btn btn-next" id="next-btn" onclick="nextQuestion()">ข้อถัดไป</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <h1>การทดสอบเสร็จสิ้น</h1>
+        <hr>
+        <p>ยินดีด้วยคุณ <span id="result-user" class="user-tag"></span></p>
+        <p>คะแนนของคุณคือ:</p>
+        <div id="final-score-val">0 / 30</div>
+        <p id="result-msg" style="font-weight: bold;"></p>
+        
+        <div class="result-actions">
+            <button class="btn btn-start" onclick="resetQuiz()">ทำข้อสอบอีกครั้ง</button>
+            <button class="btn btn-lesson" onclick="goToLesson()">กลับไปหน้าบทเรียน</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        // 1. Heading & Text
+        { q: "1. แท็กใดใช้สำหรับหัวข้อที่สำคัญที่สุดของหน้าเว็บ?", a: ["<head>", "<h1>", "<h6>", "<title>"], c: 1 },
+        { q: "2. แท็ก <p> ถูกออกแบบมาเพื่อใช้งานด้านใด?", a: ["สร้างรูปภาพ", "สร้างย่อหน้าข้อความ", "สร้างลิงก์", "สร้างตัวหนา"], c: 1 },
+        { q: "3. หากต้องการเน้นข้อความให้มีความสำคัญ (Strong Importance) ควรใช้แท็กใด?", a: ["<b>", "<i>", "<strong>", "<mark>"], c: 2 },
+        // 2. Lists
+        { q: "4. แท็ก <ul> แสดงผลรายการในลักษณะใด?", a: ["ตัวเลขลำดับ", "จุดกลม (Bullet)", "ตารางข้อมูล", "ลิงก์รายการ"], c: 1 },
+        { q: "5. ถ้าต้องการทำขั้นตอนการทำอาหาร 1. 2. 3. ควรใช้แท็กคู่ใด?", a: ["<ul> และ <li>", "<ol> และ <li>", "<list> และ <item>", "<dl> และ <dt>"], c: 1 },
+        { q: "6. แท็กย่อยที่ใช้ระบุรายการภายในทั้ง ul และ ol คือแท็กใด?", a: ["<item>", "<list>", "<li>", "<dd>"], c: 2 },
+        // 3. Multimedia & Links
+        { q: "7. Attribute 'href' ในแท็ก <a> ย่อมาจากอะไร?", a: ["Home Reference", "Hypertext Reference", "High Reference", "Header Reference"], c: 1 },
+        { q: "8. การทำให้รูปภาพแสดงข้อความเมื่อโหลดไม่สำเร็จ ต้องใช้ Attribute ใด?", a: ["src", "title", "alt", "caption"], c: 2 },
+        { q: "9. หากต้องการให้ลิงก์เปิดในหน้าต่างใหม่ (New Tab) ต้องใส่ค่าอย่างไร?", a: ["target='_self'", "target='_top'", "target='_blank'", "target='_new'"], c: 2 },
+        // 4. ตารางและฟอร์มพื้นฐาน
+        { q: "10. แท็กใดใช้กำหนดแถว (Row) ของตาราง?", a: ["<td>", "<th>", "<tr>", "<table>"], c: 2 },
+        { q: "11. ถ้าต้องการขยายช่องตารางให้ควบ 2 คอลัมน์ ต้องใช้ Attribute ใด?", a: ["rowspan", "colspan", "width", "span"], c: 1 },
+        { q: "12. แท็ก <form> มักใช้ Attribute 'method' ค่าใดสำหรับส่งข้อมูลลับ?", a: ["GET", "SEND", "POST", "SECRET"], c: 2 },
+        // 5. มัลติมีเดียขั้นสูง
+        { q: "13. แท็ก <audio> จะแสดงปุ่มควบคุมเสียงได้ก็ต่อเมื่อใส่ Attribute ใด?", a: ["autoplay", "loop", "controls", "muted"], c: 2 },
+        { q: "14. Semantic Tag ใดใช้สำหรับเนื้อหาที่เป็น 'บทความ' อิสระ?", a: ["<section>", "<article>", "<aside>", "<main>"], c: 1 },
+        { q: "15. การฝังวิดีโอจาก YouTube มักใช้แท็กใด?", a: ["<video>", "<embed>", "<iframe>", "<object>"], c: 2 },
+        // 6. HTML Forms & Input
+        { q: "16. Input type ใดใช้สำหรับรับข้อมูลที่เป็น 'อีเมล' และมีการตรวจรูปแบบ?", a: ["text", "email", "url", "check"], c: 1 },
+        { q: "17. ข้อใดคือความต่างของ Checkbox และ Radio?", a: ["Checkbox เลือกได้หนึ่งเดียว", "Radio เลือกได้หลายอย่าง", "Checkbox เลือกได้หลายอย่าง Radio เลือกได้หนึ่งเดียว", "ไม่มีความต่าง"], c: 2 },
+        { q: "18. Attribute ใดใช้บังคับว่าผู้ใช้ 'ห้ามว่าง' ช่องกรอกนี้?", a: ["checked", "disabled", "required", "readonly"], c: 2 },
+        { q: "19. แท็ก <textarea> ต่างจาก <input type='text'> อย่างไร?", a: ["พิมพ์ได้บรรทัดเดียว", "พิมพ์ได้หลายบรรทัด", "ใส่รูปได้", "ส่งข้อมูลไม่ได้"], c: 1 },
+        // 7. Grouping & Layout
+        { q: "20. แท็ก <div> เป็นองค์ประกอบประเภทใด?", a: ["Inline", "Block-level", "Hidden", "Metadata"], c: 1 },
+        { q: "21. หากต้องการแต่งสีตัวอักษรบางคำในย่อหน้า ควรใช้แท็กใดครอบ?", a: ["<div>", "<span>", "<section>", "<article>"], c: 1 },
+        { q: "22. ID ของ Element ในหน้าเว็บหนึ่งๆ สามารถซ้ำกันได้หรือไม่?", a: ["ได้", "ไม่ได้", "ได้ถ้าอยู่คนละบรรทัด", "ได้ถ้าเป็นคนละแท็ก"], c: 1 },
+        // 8. HTML with JavaScript
+        { q: "23. แท็ก <script> ใช้สำหรับเชื่อมต่อกับภาษาใด?", a: ["PHP", "Python", "JavaScript", "C++"], c: 2 },
+        { q: "24. Event ใดทำงานเมื่อนำเมาส์ไป 'วางเหนือ' องค์ประกอบ?", a: ["onclick", "onmouseover", "onchange", "onload"], c: 1 },
+        { q: "25. การเข้าถึง Element ผ่าน ID ใน JavaScript ใช้คำสั่งใด?", a: ["getElementByClass", "getElementById", "querySelector", "getId"], c: 1 },
+        { q: "26. Attribute ใดใช้เรียกใช้ JavaScript เมื่อฟอร์มถูกส่งข้อมูล?", a: ["onclick", "onsubmit", "onready", "oninput"], c: 1 },
+        // 9. Entities
+        { q: "27. สัญลักษณ์ &copy; จะแสดงผลเป็นรูปใดบนหน้าจอ?", a: ["&", "©", "®", "™"], c: 1 },
+        { q: "28. หากต้องการพิมพ์เครื่องหมาย < ในเนื้อหาโดยไม่ให้เบราว์เซอร์สับสนว่าเป็นแท็ก ต้องใช้รหัสใด?", a: ["&gt;", "&lt;", "&amp;", "&quot;"], c: 1 },
+        { q: "29. รหัส &nbsp; ใช้เพื่อวัตถุประสงค์ใด?", a: ["ขึ้นบรรทัดใหม่", "ทำตัวหนา", "เว้นวรรคช่องว่าง", "ใส่สี"], c: 2 },
+        { q: "30. รหัสเอนทิตีทุกตัวต้อง 'ลงท้าย' ด้วยเครื่องหมายใด?", a: ["& (Ampersand)", "; (Semicolon)", ": (Colon)", ". (Dot)"], c: 1 }
+    ];
+
+    let currentQuestion = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+    let userName = "";
+
+    function startQuiz() {
+        userName = document.getElementById('username').value.trim();
+        if(!userName) return alert("กรุณากรอกชื่อของคุณก่อนเริ่มสอบ");
+        
+        document.getElementById('display-name').innerText = userName;
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const data = quizData[currentQuestion];
+        document.getElementById('question-text').innerText = data.q;
+        document.getElementById('current-idx').innerText = currentQuestion + 1;
+        
+        const list = document.getElementById('options-list');
+        list.innerHTML = "";
+        
+        data.a.forEach((txt, i) => {
+            const div = document.createElement('div');
+            div.className = `option ${userAnswers[currentQuestion] === i ? 'selected' : ''}`;
+            div.innerText = txt;
+            div.onclick = () => selectOption(i);
+            list.appendChild(div);
+        });
+
+        document.getElementById('prev-btn').disabled = currentQuestion === 0;
+        document.getElementById('next-btn').innerText = currentQuestion === quizData.length - 1 ? "ส่งข้อสอบ" : "ข้อถัดไป";
+        
+        const progress = ((currentQuestion + 1) / quizData.length) * 100;
+        document.getElementById('progress-fill').style.width = progress + "%";
+    }
+
+    function selectOption(index) {
+        userAnswers[currentQuestion] = index;
+        renderQuestion();
+    }
+
+    function nextQuestion() {
+        if(userAnswers[currentQuestion] === null) return alert("กรุณาเลือกคำตอบก่อนไปต่อ");
+        
+        if(currentQuestion < quizData.length - 1) {
+            currentQuestion++;
+            renderQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function prevQuestion() {
+        if(currentQuestion > 0) {
+            currentQuestion--;
+            renderQuestion();
+        }
+    }
+
+    function showResult() {
+        let score = 0;
+        quizData.forEach((item, i) => {
+            if(userAnswers[i] === item.c) score++;
+        });
+
+        document.getElementById('quiz-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        document.getElementById('result-user').innerText = userName;
+        document.getElementById('final-score-val').innerText = `${score} / ${quizData.length}`;
+        
+        let msg = "";
+        if(score === 30) msg = "Perfect! คุณคือสุดยอดนักพัฒนาเว็บ!";
+        else if(score >= 24) msg = "เยี่ยมมาก! ความรู้ของคุณอยู่ในระดับดีเยี่ยม";
+        else if(score >= 15) msg = "ผ่านเกณฑ์! คุณมีความเข้าใจพื้นฐานที่ดี";
+        else msg = "ควรทบทวนเนื้อหาเพิ่มเติมและลองใหม่อีกครั้งนะ";
+        
+        document.getElementById('result-msg').innerText = msg;
+    }
+
+    function resetQuiz() {
+        userAnswers = new Array(quizData.length).fill(null);
+        currentQuestion = 0;
+        document.getElementById('result-screen').classList.remove('active');
+        document.getElementById('start-screen').classList.add('active');
+    }
+
+    function goToLesson() {
+        // เปลี่ยนเป็นชื่อไฟล์หน้าบทเรียนของคุณที่นี่
+        window.location.href = "lesson-html.html";
+    }
+</script>
+</body>
+</html>
