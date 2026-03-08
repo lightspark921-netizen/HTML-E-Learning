@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนที่ 8 - HTML with JavaScript</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #fdfcf0;
+            --js-yellow: #f7df1e;
+            --js-dark: #20232a;
+            --logic-blue: #007acc;
+            --desk: #1a1a1a;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 800px;
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+        .book-wrapper.is-open { width: 1200px; }
+
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: var(--js-dark); left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: var(--js-yellow); text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid #000; box-shadow: 20px 0 60px rgba(0,0,0,0.7);
+            cursor: pointer; backface-visibility: hidden;
+            background-image: linear-gradient(30deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
+            linear-gradient(150deg, #111 12%, transparent 12.5%, transparent 87%, #111 87.5%, #111),
+            linear-gradient(60deg, #1a1a1a 25%, transparent 25.5%, transparent 75%, #1a1a1a 75%, #1a1a1a);
+            background-size: 80px 140px;
+        }
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        .notebook {
+            position: absolute; width: 1200px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+        }
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { flex: 1; padding: 50px 60px; overflow-y: auto; scrollbar-width: thin; }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--logic-blue); border-bottom: 3px solid var(--js-yellow); padding-bottom: 10px; margin-bottom: 25px; font-weight: 700; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: #d35400; margin-top: 30px; font-weight: 700; border-left: 5px solid var(--logic-blue); padding-left: 15px; }
+        p { line-height: 1.8; font-size: 1.05rem; color: #2c3e50; text-align: justify; margin-bottom: 1.5rem; }
+        
+        .code-block { 
+            background: #1e1e1e; color: #dcdccc; padding: 20px; 
+            border-radius: 8px; font-family: 'Fira Code', monospace; 
+            font-size: 0.85rem; margin: 20px 0; border-right: 5px solid var(--js-yellow);
+        }
+        .tip-box { background: #eef2ff; border-radius: 8px; padding: 20px; border-left: 6px solid var(--logic-blue); margin: 25px 0; font-size: 1rem; }
+        
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 40px; border-top: 1px solid #eee; border-radius: 0 0 20px 5px;
+        }
+        .btn-nav { background: var(--js-dark); color: var(--js-yellow); border: none; padding: 10px 25px; border-radius: 5px; font-weight: bold; transition: 0.3s; }
+        .btn-nav:hover:not(:disabled) { background: var(--logic-blue); color: #fff; }
+        .btn-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        .glow-icon { filter: drop-shadow(0 0 10px var(--js-yellow)); animation: pulse 2s infinite; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+        <i class="bi bi-cpu-fill glow-icon" style="font-size: 6rem; margin-bottom: 20px;"></i>
+        <h1 class="display-4 fw-bold" style="font-family: 'Chakra Petch';">UNIT 08</h1>
+        <h2 style="color:white; border:none; margin:0;">HTML with JavaScript</h2>
+        <p style="color:var(--js-yellow); text-align:center;" class="lead mt-2">INTERACTIVE WEB ENGINE</p>
+        <div style="width: 100px; height: 4px; background: var(--js-yellow); margin: 25px 0;"></div>
+        <p class="small" style="color:white; opacity:0.8;">"เปลี่ยนหน้าเว็บนิ่งๆ ให้มีชีวิตด้วยพลังแห่ง Logic"</p>
+        <div class="mt-4 small"><i class="bi bi-mouse3"></i> CLICK TO INITIALIZE SCRIPT</div>
+    </div>
+
+    <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+               <button class="btn-nav btn-menu" onclick="window.location.href='lesson-html.html'">
+                    <i class="bi bi-grid-fill"></i> เลือกบทเรียน
+                </button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            
+            <div class="fw-bold text-muted small">Unit 08 | หน้า <span id="pageNum">1</span> / <span id="totalPage">8</span></div>
+            
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+<script>
+const content = [
+    {
+        left: `<h2>1. JavaScript: หัวใจแห่งความอัจฉริยะ</h2>
+               <p>หาก HTML คือโครงกระดูก และ CSS คือผิวพรรณ <b>JavaScript (JS)</b> ก็คือ "สมองและระบบประสาท" ครับนาย! มันคือภาษาที่เปลี่ยนหน้าเว็บจากเอกสารนิ่งๆ ให้กลายเป็นแอพพลิเคชั่นที่โต้ตอบได้แบบ Real-time</p>
+                              <h4>บทบาทของ JS ในโลกเว็บปัจจุบัน</h4>
+               <p>ในยุคนี้ JS ไม่ได้มีไว้แค่ทำตัวอักษรวิ่ง แต่ใช้จัดการข้อมูลขนาดใหญ่, ดึงข้อมูลจาก Server โดยไม่ต้องโหลดหน้าใหม่ (AJAX), และสร้างประสบการณ์ผู้ใช้ (UX) ที่ลื่นไหลเหมือนใช้โปรแกรมบนคอมพิวเตอร์จริงๆ</p>
+               <div class="tip-box"><i class="bi bi-terminal"></i> <b>ทำไมนายต้องเรียน?</b><br>เพราะ JS เป็นภาษาที่ทำงานฝั่ง Client-side (เครื่องผู้ใช้) ทำให้ตอบสนองได้รวดเร็วทันใจ ไม่ต้องรอคำสั่งจาก Server ตลอดเวลาครับ!</div>`,
+        right: `<h4>การติดตั้ง Script เข้ากับ HTML</h4>
+                <p>เราเชื่อมต่อ JS ได้ 3 วิธีหลักๆ เพื่อให้เหมาะสมกับขนาดของโปรเจกต์ครับ:</p>
+                <ul>
+                    <li><b>Internal:</b> เขียนในแท็ก <code>&lt;script&gt;</code> ก่อนปิด Body</li>
+                    <li><b>External:</b> แยกเป็นไฟล์ <code>.js</code> (แนะนำที่สุดเพื่อความเป็นระเบียบ)</li>
+                    <li><b>Inline:</b> เขียนใน Attribute (ไม่ค่อยนิยมในปัจจุบัน)</li>
+                </ul>
+                <div class="code-block">
+                <span style="color:#6a9955">// ตัวอย่างการเชื่อมไฟล์ภายนอก</span><br>
+                <span style="color:#569cd6">&lt;script</span> <span style="color:#9cdcfe">src=</span><span style="color:#ce9178">"app.js"</span><span style="color:#569cd6">&gt;&lt;/script&gt;</span>
+                </div>
+                <p>นายควรวางแท็ก Script ไว้ท้ายสุดของไฟล์ เพื่อให้เบราว์เซอร์อ่าน HTML ให้เสร็จก่อนที่ JS จะเริ่มทำงานครับ ซึ่งเทคนิคนี้จะช่วยให้หน้าเว็บโหลดได้รวดเร็วและไม่ติดขัดระหว่างที่สคริปต์ขนาดใหญ่กำลังทำงาน</p>`
+    },
+    {
+        left: `<h2>2. เข้าใจ DOM (Document Object Model)</h2>
+               <p><b>DOM</b> คือโครงสร้างที่เบราว์เซอร์สร้างขึ้นเพื่อแปลผล HTML ให้กลายเป็น "วัตถุ" ที่ JavaScript สามารถเข้าไป "จับ" และ "สั่งการ" ได้เหมือนการจับแขนขาของโครงร่างเว็บครับ</p>
+                              <h4>วิธีการเลือก Element ที่แม่นยำ</h4>
+               <p>ก่อนจะสั่งงาน นายต้องเลือกเป้าหมายให้ถูกตัวก่อน โดยใช้คำสั่งเหล่านี้:</p>
+               <ul>
+                 <li><code>getElementById()</code>: เลือกผ่าน ID (เร็วที่สุดและระบุตัวตนชัดเจน)</li>
+                 <li><code>querySelector()</code>: เลือกแบบ CSS Selector (ยืดหยุ่นที่สุดสำหรับ Class หรือ Tag)</li>
+               </ul>
+               <div class="code-block">
+               <span style="color:#569cd6">const</span> title = document.<span style="color:#dcdcaa">getElementById</span>(<span style="color:#ce9178">'header'</span>);<br>
+               <span style="color:#569cd6">const</span> btn = document.<span style="color:#dcdcaa">querySelector</span>(<span style="color:#ce9178">'.btn-submit'</span>);
+               </div>`,
+        right: `<h4>การแก้ไข Content & Style ผ่าน DOM</h4>
+                <p>เมื่อเลือกได้แล้ว นายสั่งเปลี่ยนอะไรก็ได้ในหน้านั้นทันทีครับ!</p>
+                <div class="code-block">
+                <span style="color:#6a9955">// เปลี่ยนข้อความภายใน</span><br>
+                title.<span style="color:#9cdcfe">innerText</span> = <span style="color:#ce9178">"ภารกิจเสร็จสิ้น!"</span>;<br><br>
+                <span style="color:#6a9955">// เปลี่ยนสไตล์แบบ Dynamic</span><br>
+                title.<span style="color:#9cdcfe">style</span>.<span style="color:#9cdcfe">color</span> = <span style="color:#ce9178">"green"</span>;<br>
+                title.<span style="color:#9cdcfe">classList</span>.<span style="color:#dcdcaa">add</span>(<span style="color:#ce9178">'active'</span>);
+                </div>
+                <p>การแก้ไขผ่าน DOM จะเปลี่ยนผลลัพธ์บนหน้าจอผู้ใช้ทันทีโดยไม่ต้อง Refresh หน้าเว็บ ซึ่งเป็นหัวใจสำคัญของการทำ Single Page Application (SPA)</p>
+                <div class="tip-box"><b>Pro Tip:</b> การแก้ผ่าน <code>classList</code> ดีกว่า <code>style</code> โดยตรง เพราะช่วยให้เราจัดการสไตล์ทั้งหมดผ่านไฟล์ CSS ไฟล์เดียวได้ง่ายกว่าครับนาย!</div>`
+    },
+    {
+        left: `<h2>3. Event Listeners: หูทิพย์ของหน้าเว็บ</h2>
+               <p>ถ้าไม่มี Event หน้าเว็บก็เหมือนคนที่ไม่ได้ยินเสียงใครเลย <b>Event</b> คือการดักฟังการกระทำของผู้ใช้เพื่อให้โค้ดทำงานตามที่เราต้องการครับ</p>
+               <h4>เหตุการณ์ที่นิยมดักฟัง</h4>
+               <ul>
+                 <li><code>click</code>: เมื่อผู้ใช้คลิกเมาส์</li>
+                 <li><code>submit</code>: เมื่อมีการส่งแบบฟอร์ม</li>
+                 <li><code>mouseover</code>: เมื่อเอาเมาส์ไปชี้</li>
+                 <li><code>keyup</code>: เมื่อปล่อยนิ้วจากคีย์บอร์ด</li>
+               </ul>
+               <div class="code-block">
+               btn.<span style="color:#dcdcaa">addEventListener</span>(<span style="color:#ce9178">'click'</span>, () => {<br>
+               &nbsp;&nbsp;<span style="color:#dcdcaa">alert</span>(<span style="color:#ce9178">'นายคลิกปุ่มแล้ว!'</span>);<br>
+               });
+               </div>`,
+        right: `<h4>การควบคุมการทำงาน (Function)</h4>
+                <p>นายสามารถเขียนฟังก์ชันมารับช่วงต่อหลังจากเกิด Event ได้ เพื่อให้โค้ดดูสะอาดตาและนำกลับมาใช้ใหม่ได้ (Reusable)</p>
+                <div class="code-block">
+                <span style="color:#569cd6">function</span> <span style="color:#dcdcaa">toggleDarkMode</span>() {<br>
+                &nbsp;&nbsp;document.body.<span style="color:#9cdcfe">classList</span>.<span style="color:#dcdcaa">toggle</span>(<span style="color:#ce9178">'dark'</span>);<br>
+                }<br><br>
+                btn.<span style="color:#dcdcaa">onclick</span> = toggleDarkMode;
+                </div>
+                <p>การใช้ Event จะทำให้นายสร้างเมนู Dropdown, Modal Popup, หรือระบบตะกร้าสินค้าที่อัปเดตทันทีได้ครับ! ยิ่งนายเก่งเรื่อง Event มากเท่าไหร่ เว็บของนายก็จะยิ่งรู้สึก "แพง" และโต้ตอบได้ดีขึ้นเท่านั้น</p>`
+    },
+    {
+        left: `<h2>4. Variables & Data Handling</h2>
+               <p>ในการเขียนโปรแกรม นายต้องมีที่เก็บข้อมูล <b>Variables</b> คือกล่องที่เอาไว้ใช้จำค่าต่างๆ ระหว่างที่โปรแกรมกำลังทำงานครับ</p>
+               <h4>ยุคใหม่ของตัวแปร (ES6+)</h4>
+               <ul>
+                 <li><code>const</code>: สำหรับค่าที่ห้ามเปลี่ยน (แนะนำให้ใช้บ่อยที่สุดเพื่อป้องกันบั๊ก)</li>
+                 <li><code>let</code>: สำหรับค่าที่ต้องมีการเปลี่ยน (เช่น คะแนนเกม, จำนวนสินค้าในรถเข็น)</li>
+               </ul>
+               <div class="code-block">
+               <span style="color:#569cd6">const</span> shopName = <span style="color:#ce9178">"JS Mart"</span>;<br>
+               <span style="color:#569cd6">let</span> cartCount = <span style="color:#b5cea8">0</span>;<br><br>
+               <span style="color:#6a9955">// อัปเดตค่าเมื่อซื้อของ</span><br>
+               cartCount += <span style="color:#b5cea8">1</span>;
+               </div>`,
+        right: `<h4>การทำงานกับข้อความ (Template Literals)</h4>
+                <p>การเอาตัวแปรมาผสมกับข้อความ นายต้องลองใช้เครื่องหมาย Backtick ( \` ) แทนเครื่องหมายคำพูดแบบเดิมครับ</p>
+                <div class="code-block">
+                <span style="color:#569cd6">let</span> customer = <span style="color:#ce9178">"Jack"</span>;<br>
+                <span style="color:#6a9955">// ใช้ \${} เพื่อแทรกตัวแปร</span><br>
+                <span style="color:#569cd6">let</span> greeting = <span style="color:#ce9178">\`ยินดีต้อนรับครับนาย \${customer}!\`</span>;
+                </div>
+                <p>วิธีนี้ทำให้นายสร้างโครงสร้าง HTML ยาวๆ ภายใน JS ได้ง่ายมาก และไม่ต้องกังวลเรื่องการต่อสตริงด้วยเครื่องหมาย + ให้รกรุงรังเหมือนเมื่อก่อนครับนาย!</p>
+                <p>ข้อมูลใน JS มีหลายชนิด ทั้ง <b>String</b> (ข้อความ), <b>Number</b> (ตัวเลข), <b>Boolean</b> (จริง/เท็จ) และ <b>Object</b> (ข้อมูลเชิงซ้อน)</p>`
+    },
+    {
+        left: `<h2>5. Conditions: การตัดสินใจของโปรแกรม</h2>
+               <p>โปรแกรมที่ดีต้องรู้จักแยกแยะสถานการณ์ <b>If-Else</b> คือทางแยกที่กำหนดว่าโค้ดส่วนไหนควรทำงานหรือไม่ทำงานตามเงื่อนไขที่กำหนดไว้</p>
+                              <h4>ตรรกะการตรวจสอบ (Logic Control)</h4>
+               <div class="code-block">
+               <span style="color:#569cd6">const</span> score = <span style="color:#b5cea8">85</span>;<br><br>
+               <span style="color:#569cd6">if</span> (score >= <span style="color:#b5cea8">80</span>) {<br>
+               &nbsp;&nbsp;<span style="color:#dcdcaa">alert</span>(<span style="color:#ce9178">"นายได้เกรด A! สุดยอดครับ"</span>);<br>
+               } <span style="color:#569cd6">else</span> {<br>
+               &nbsp;&nbsp;<span style="color:#dcdcaa">alert</span>(<span style="color:#ce9178">"พยายามอีกนิดครับนาย"</span>);<br>
+               }
+               </div>`,
+        right: `<h4>เครื่องมือเปรียบเทียบ (Operators)</h4>
+                <p>นายต้องใช้สัญลักษณ์เหล่านี้ในการเขียนเงื่อนไขครับ:</p>
+                <ul>
+                  <li><code>===</code> : เท่ากันทั้งค่าและชนิดข้อมูล</li>
+                  <li><code>!==</code> : ไม่เท่ากัน</li>
+                  <li><code>&&</code> : ต้องเป็นจริง "ทั้งคู่" (และ)</li>
+                  <li><code>||</code> : เป็นจริงแค่ "อย่างใดอย่างหนึ่ง" (หรือ)</li>
+                </ul>
+                <div class="tip-box"><b>ข้อควรระวัง:</b> ใน JS ให้ใช้ <code>===</code> แทน <code>==</code> เสมอ เพื่อความแม่นยำสูงสุดและป้องกันการเปรียบเทียบผิดชนิดข้อมูลครับ!</div>
+                <p>นายสามารถใช้ <code>else if</code> เพื่อสร้างเงื่อนไขหลายชั้น เช่น การคำนวณเกรด หรือการตรวจสอบสิทธิ์ของผู้ใช้งานในระบบ</p>`
+    },
+    {
+        left: `<h2>6. Array & Loops: พลังแห่งการจัดการข้อมูลกลุ่ม</h2>
+               <p>ถ้านายต้องแสดงสินค้า 1,000 ชิ้น นายคงไม่อยากเขียน HTML 1,000 รอบ <b>Loops</b> จะช่วยทำเรื่องที่น่าเบื่อและซ้ำซากให้เสร็จในพริบตาครับ</p>
+               <h4>การเก็บข้อมูลแบบกลุ่ม (Array)</h4>
+               <div class="code-block">
+               <span style="color:#569cd6">const</span> tools = [<span style="color:#ce9178">'HTML'</span>, <span style="color:#ce9178">'CSS'</span>, <span style="color:#ce9178">'JS'</span>, <span style="color:#ce9178">'React'</span>];<br><br>
+               <span style="color:#6a9955">// เข้าถึงตัวแรก (คอมเริ่มนับที่ 0)</span><br>
+               <span style="color:#dcdcaa">console</span>.<span style="color:#dcdcaa">log</span>(tools[<span style="color:#b5cea8">0</span>]);
+               </div>`,
+        right: `<h4>การใช้ forEach วนซ้ำอัตโนมัติ</h4>
+                <p>เป็นวิธีที่ง่ายที่สุดในการดึงข้อมูลจาก Array มาสร้างหน้าเว็บครับ</p>
+                <div class="code-block">
+                tools.<span style="color:#dcdcaa">forEach</span>(item => {<br>
+                &nbsp;&nbsp;<span style="color:#6a9955">// สร้างลิสต์ใน HTML ทันที</span><br>
+                &nbsp;&nbsp;list.<span style="color:#9cdcfe">innerHTML</span> += <span style="color:#ce9178">\`&lt;li&gt;\${item}&lt;/li&gt;\`</span>;<br>
+                });
+                </div>
+                <p>ลองนึกภาพว่านายดึงข้อมูลรายชื่อพนักงานหรือรายการสินค้าจาก Server มาแสดงผล เทคนิคนี้จะทำให้นายประหยัดเวลาและโค้ดของนายจะดูเป็นระเบียบมากครับนาย!</p>
+                <p>นายยังสามารถใช้ <code>filter</code> เพื่อกรองข้อมูล หรือ <code>map</code> เพื่อแปลงข้อมูลให้เป็นรูปแบบใหม่ได้อีกด้วย</p>`
+    },
+    {
+        left: `<h2>7. Modern JS: ES6+ & Beyond</h2>
+               <p>โลกของ JavaScript พัฒนาไปไกลมาก ปัจจุบันเรามีฟีเจอร์ที่ช่วยให้เขียนโค้ดสั้นลง อ่านง่ายขึ้น และสวยงามขึ้นมากครับ</p>
+               <h4>Arrow Functions</h4>
+               <p>วิธีเขียนฟังก์ชันแบบย่อ ลดความยุ่งยากของคำว่า <code>function</code> และจัดการเรื่อง Scope ได้ดีขึ้น</p>
+               <div class="code-block">
+                 <span style="color:#6a9955">// แบบเดิม</span><br>
+                 <span style="color:#569cd6">function</span> <span style="color:#dcdcaa">sayHi</span>() { ... }<br><br>
+                 <span style="color:#6a9955">// แบบใหม่ (Arrow)</span><br>
+                 <span style="color:#569cd6">const</span> <span style="color:#dcdcaa">sayHi</span> = () => { ... }
+               </div>`,
+        right: `<h4>Destructuring & Spreading</h4>
+                <p>การแกะข้อมูลออกจากวัตถุ หรือการรวมกลุ่มข้อมูลเข้าด้วยกันอย่างเท่และรวดเร็ว:</p>
+                <div class="code-block">
+                  <span style="color:#569cd6">const</span> user = { name: <span style="color:#ce9178">'Jack'</span>, age: <span style="color:#b5cea8">25</span> };<br>
+                  <span style="color:#569cd6">const</span> { name } = user; <span style="color:#6a9955">// ดึง name มาใช้ได้เลย</span><br><br>
+                  <span style="color:#569cd6">const</span> a = [<span style="color:#b5cea8">1</span>,<span style="color:#b5cea8">2</span>];<br>
+                  <span style="color:#569cd6">const</span> b = [...a, <span style="color:#b5cea8">3</span>]; <span style="color:#6a9955">// ได้ [1,2,3] ทันที</span>
+                </div>
+                <p>ไวยากรณ์เหล่านี้คือมาตรฐานที่โปรแกรมเมอร์มืออาชีพใช้กันทุกคน นายต้องจำพวกนี้ไว้เพื่อความเป็นโปรครับ! มันจะช่วยให้นายอ่านโค้ดของคนอื่นใน GitHub หรือ Stack Overflow ได้เข้าใจมากขึ้นครับนาย</p>`
+    },
+    {
+        left: `<h2>8. สรุปความแกร่ง: Mini App</h2>
+               <p>มาลองสร้างระบบ "คลิกนับเลข" (Counter) กันครับ นี่คือโปรเจกต์คลาสสิกที่รวมทั้ง DOM, Event และ Logic ไว้ด้วยกันอย่างลงตัวที่สุด</p>
+               <textarea id="editor" spellcheck="false" oninput="updatePreview()" style="width:100%; height:300px; font-family:monospace; padding:15px; border-radius:8px;">
+<div style="text-align:center; padding:30px; background:#f8f9fa; border-radius:15px;">
+  <h1 id="num" style="font-size:5rem; color:#007acc;">0</h1>
+  <div class="d-flex justify-content-center gap-3">
+    <button onclick="change(1)" class="btn btn-primary btn-lg">เพิ่ม (+)</button>
+    <button onclick="change(-1)" class="btn btn-danger btn-lg">ลด (-)</button>
+  </div>
+</div>
+
+<script>
+  let count = 0;
+  function change(val) {
+    count += val;
+    const display = document.getElementById('num');
+    display.innerText = count;
+    display.style.color = count < 0 ? 'red' : (count > 0 ? 'green' : '#007acc');
+  }
+<\/script></textarea>`, // <-- สังเกตตรง <\/script> ผมใส่ Backslash ไว้ครับ
+        right: `<h4>Live Preview:</h4>
+                <div id="live-preview" style="background:white; border:2px dashed #ccc; height:320px; border-radius:10px; display:flex; align-items:center; justify-content:center;"></div>
+                <div class="tip-box" style="background: #d4edda; border-color: #c3e6cb; margin-top:20px;">
+                    <i class="bi bi-trophy-fill"></i> <b>Mastery Unlocked!</b><br>
+                    ยินดีด้วยครับนาย! ตอนนี้หน้าเว็บของนายมีความฉลาดแล้ว พร้อมจะไปต่อที่โปรเจกต์ที่ใหญ่กว่านี้หรือยัง?
+                </div>
+                <p class="small text-muted">นายสามารถนำ Logic นี้ไปประยุกต์ใช้กับปุ่ม "เพิ่มลงรถเข็น" หรือ "กด Like" ในเว็บไซต์จริงๆ ได้เลยครับ</p>`
+    }
+
+];
+
+let currentPage = 0;
+let isOpen = false;
+
+function openBook() {
+    if (isOpen) return;
+    isOpen = true;
+    document.getElementById('wrapper').classList.add('is-open');
+    document.getElementById('bookCover').classList.add('opened');
+    setTimeout(renderPage, 300);
+}
+
+function renderPage() {
+    const set = content[currentPage];
+    const left = document.getElementById('left-page');
+    const right = document.getElementById('right-page');
+    
+    left.style.opacity = 0;
+    right.style.opacity = 0;
+    
+    setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+            if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป (Lists)</span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'lesson9.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+    }, 150);
+}
+
+function changePage(step) {
+    if (currentPage + step >= 0 && currentPage + step < content.length) {
+        currentPage += step;
+        renderPage();
+    }
+}
+
+function updatePreview() {
+    const code = document.getElementById('editor').value;
+    const preview = document.getElementById('live-preview');
+    if(preview) {
+        const frame = document.createElement('iframe');
+        frame.style.width = '100%';
+        frame.style.height = '100%';
+        frame.style.border = 'none';
+        preview.innerHTML = '';
+        preview.appendChild(frame);
+        const doc = frame.contentWindow.document;
+        doc.open();
+        doc.write('<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">' + code);
+        doc.close();
+    }
+}
+</script>
+
+</body>
+</html>

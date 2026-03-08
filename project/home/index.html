@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสื่อการเรียนการสอนออนไลน์ - IT Project ท่าหลวงฯ</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --primary-color: #1e3c72;
+            --secondary-color: #2a5298;
+            --accent-color: #ffcc00;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f4f7f6;
+        }
+
+        .navbar {
+            background: var(--primary-color) !important;
+            border-bottom: 3px solid var(--accent-color);
+        }
+
+        /* Hero Section */
+        .hero-section {
+            background: linear-gradient(rgba(30, 60, 114, 0.9), rgba(42, 82, 152, 0.9)),
+                url('https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=1500');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 120px 0;
+            border-bottom-left-radius: 60px;
+            border-bottom-right-radius: 60px;
+        }
+
+        .course-card {
+            border: none;
+            border-radius: 25px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: #fff;
+        }
+
+        .course-card:hover {
+            transform: translateY(-15px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12) !important;
+        }
+
+        .card-img-top {
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .student-badge {
+            background: white;
+            color: var(--primary-color);
+            padding: 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 30px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--accent-color);
+        }
+
+        .btn-start {
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* สไตล์เพิ่มเติมสำหรับส่วนแสดงชื่อผู้ใช้ */
+        #user-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-name {
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+        .logout-btn {
+            font-size: 0.8rem;
+            padding: 2px 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="http://www.tl.ac.th/main.php">
+                <i class="bi bi-mortarboard-fill me-2"></i>ท่าหลวงฯ
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link active" href="1.html">หน้าแรก</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#courses">หลักสูตร</a></li>
+                    
+                    <li class="nav-item ms-lg-3" id="nav-auth-section">
+                        <a class="nav-link btn btn-outline-warning text-white px-3" href="login.html">เข้าสู่ระบบ</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero-section text-center shadow-lg">
+        <div class="container">
+            <h1 class="display-4 fw-bold mb-3">สื่อการเรียนการสอนภาษา HTML CSS & PHP</h1>
+            <p class="lead mb-4 opacity-75">โครงการพัฒนาสื่อการเรียนรู้
+                สาขาวิชาเทคโนโลยีคอมพิวเตอร์<br>วิทยาลัยเทคนิคท่าหลวงซิเมนต์ไทยอนุสรณ์</p>
+            
+            <div class="student-badge text-start shadow-sm p-3 bg-white border-start border-4 border-warning"
+                style="border-radius: 15px;">
+                <p class="mb-2 small fw-bold text-uppercase text-muted" style="letter-spacing: 1px;">
+                    <i class="bi bi-code-square me-1"></i> คณะผู้จัดทำ:
+                </p>
+                <div class="d-flex flex-column gap-1">
+                    <p class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-person-badge me-2 text-primary"></i>นายพงศ์ภีระ ปิ่นทอง
+                    </p>
+                    <p class="mb-0 fw-bold text-navy">
+                        <i class="bi bi-person-badge me-2 text-primary"></i>นายเมธาพร รางวัลหลาย
+                    </p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container my-5" id="courses">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-dark">หลักสูตรการเรียนรู้</h2>
+            <div class="mx-auto" style="width: 80px; height: 5px; background: var(--accent-color); border-radius: 5px;">
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 course-card shadow-sm">
+                    <img src="https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&w=500"
+                        class="card-img-top" alt="HTML">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-warning text-dark">Level: Beginner</span>
+                        </div>
+                        <h5 class="card-title fw-bold">1. HTML5 Foundation</h5>
+                        <p class="card-text text-muted small">วางโครงสร้างเว็บไซต์ด้วยมาตรฐานล่าสุด เข้าใจ Semantic Web</p>
+                        <a href="../html/lesson-html.html" target="_blank" class="btn btn-primary w-100 btn-start mt-3">เริ่มบทเรียน <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 course-card shadow-sm">
+                    <img src="https://images.unsplash.com/photo-1523437113738-bbd3cc89fb19?auto=format&fit=crop&w=500"
+                        class="card-img-top" alt="CSS">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-primary">Level: Intermediate</span>
+                        </div>
+                        <h5 class="card-title fw-bold">2. CSS3 & Responsive Design</h5>
+                        <p class="card-text text-muted small">ตกแต่งเว็บให้สวยงามและรองรับมือถือด้วย Flexbox และ Grid</p>
+                        <a href="../ccs/course_css.html" target="_blank" class="btn btn-primary w-100 btn-start mt-3">เริ่มบทเรียน <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 course-card shadow-sm">
+                    <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?auto=format&fit=crop&w=500"
+                        class="card-img-top" alt="PHP">
+                    <div class="card-body p-4">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="badge bg-dark">Level: Advanced</span>
+                        </div>
+                        <h5 class="card-title fw-bold">3. Backend with PHP & MySQL</h5>
+                        <p class="card-text text-muted small">ระบบฐานข้อมูล การจัดการ Session และความปลอดภัยฝั่ง Server</p>
+                        <a href="../php/course_php.html" target="_blank" class="btn btn-primary w-100 btn-start mt-3">เริ่มบทเรียน <i class="bi bi-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-dark text-white py-5 shadow-lg">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-6 text-center text-md-start">
+                    <h5 class="fw-bold text-warning">แผนกเทคโนโลยีคอมพิวเตอร์</h5>
+                    <p class="small opacity-75">
+                        วิทยาลัยเทคนิคท่าหลวงซิเมนต์ไทยอนุสรณ์<br>โครงการวิจัยและพัฒนาซอฟต์แวร์เพื่อการศึกษา 2569</p>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <p class="small mb-2">ติดตามข่าวสารแผนก</p>
+                    <div class="h4">
+                        <i class="bi bi-facebook mx-2"></i>
+                        <i class="bi bi-globe mx-2"></i>
+                        <i class="bi bi-envelope-fill mx-2"></i>
+                    </div>
+                </div>
+            </div>
+            <hr class="my-4 opacity-25">
+            <div class="text-center small opacity-50">
+                &copy; 2026 Project - ปวส. 2 ท่าหลวงฯ.
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ดึงชื่อผู้ใช้จาก localStorage
+            const savedUser = localStorage.getItem('display_name');
+            const authSection = document.getElementById('nav-auth-section');
+
+            if (savedUser) {
+                // ถ้ามีชื่อผู้ใช้ ให้เปลี่ยนปุ่ม Login เป็นชื่อผู้ใช้และปุ่ม Logout
+                authSection.innerHTML = `
+                    <div id="user-section">
+                        <span class="user-name"><i class="bi bi-person-circle me-1"></i> ${savedUser}</span>
+                        <button onclick="logout()" class="btn btn-sm btn-danger logout-btn ms-2">Logout</button>
+                    </div>
+                `;
+            }
+        });
+
+        // ฟังก์ชัน Logout
+        function logout() {
+            if(confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
+                localStorage.removeItem('display_name'); // ลบชื่อออกจากเครื่อง
+                window.location.reload(); // รีเฟรชหน้า
+            }
+        }
+    </script>
+</body>
+
+</html>

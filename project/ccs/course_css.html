@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS3 Roadmap - Styling Edition</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --css-blue: #264de4; /* สีมาตรฐานของ CSS3 */
+            --paper: #f0f4fd;
+            --ink: #1b262c;
+        }
+
+        body { 
+            background: #cbd5e1; 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1500px;
+            overflow: hidden;
+        }
+
+        /* --- หน้าปก CSS Edition --- */
+        #book-cover {
+            width: 420px; height: 580px;
+            background: linear-gradient(135deg, #1b262c 0%, #0f4c75 100%);
+            border-radius: 10px 30px 30px 10px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; padding: 40px; position: relative;
+            box-shadow: 20px 20px 60px rgba(0,0,0,0.4);
+            transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.5s;
+            z-index: 10; cursor: pointer; border-left: 15px solid #053f5e;
+        }
+
+        .book-opened { transform: rotateY(-110deg) translateX(-100%); opacity: 0; pointer-events: none; }
+
+        /* --- ตัวสมุดข้างใน --- */
+        #book-inside {
+            display: none; width: 450px; min-height: 550px;
+            background: var(--paper); position: absolute;
+            box-shadow: 10px 10px 30px rgba(0,0,0,0.1);
+            border-radius: 5px 20px 20px 5px; padding: 50px 40px;
+            transform-style: preserve-3d;
+        }
+
+        .page-flip-next { animation: flipNext 0.6s ease-in-out; }
+        .page-flip-prev { animation: flipPrev 0.6s ease-in-out; }
+
+        @keyframes flipNext {
+            0% { transform: rotateY(0deg); opacity: 1; }
+            50% { transform: rotateY(-20deg) scale(0.95); opacity: 0.5; }
+            100% { transform: rotateY(0deg); opacity: 1; }
+        }
+
+        @keyframes flipPrev {
+            0% { transform: rotateY(0deg); opacity: 1; }
+            50% { transform: rotateY(20deg) scale(0.95); opacity: 0.5; }
+            100% { transform: rotateY(0deg); opacity: 1; }
+        }
+
+        /* สไตล์เนื้อหา */
+        .badge-step { background: var(--css-blue); color: white; padding: 5px 15px; border-radius: 50px; font-family: 'Chakra Petch', sans-serif; margin-bottom: 20px; }
+        .lesson-title { font-family: 'Chakra Petch', sans-serif; font-size: 1.8rem; color: var(--ink); margin-bottom: 20px; }
+        .lesson-desc { color: #444; font-size: 1.05rem; margin-bottom: 40px; min-height: 120px; line-height: 1.6; }
+        
+        .btn-enter {
+            background: var(--css-blue); color: white; border: none; padding: 12px 30px; border-radius: 10px; font-weight: bold; text-decoration: none; display: inline-block;
+            transition: 0.3s; box-shadow: 0 4px 15px rgba(38, 77, 228, 0.3);
+        }
+        .btn-enter:hover { transform: scale(1.05); background: #1a3ab1; color: white; }
+
+        .btn-nav {
+            background: none; border: 1px solid #cbd5e1; color: #64748b; border-radius: 50%; width: 45px; height: 45px; transition: 0.3s;
+        }
+        .btn-nav:hover:not(:disabled) { background: var(--ink); color: white; }
+        
+        .animate-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.7; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="book-cover" onclick="openBook()">
+        <div style="font-size: 6rem; color: var(--css-blue);"><i class="bi bi-filetype-css"></i></div>
+        <h1 style="font-family: 'Chakra Petch', sans-serif; font-size: 3rem;">CSS3</h1>
+        <p style="letter-spacing: 3px; opacity: 0.8;">STYLING ROADMAP</p>
+        <div style="margin-top: 30px; font-size: 0.9rem; color: #3498db;" class="animate-pulse">
+            <i class="bi bi-magic"></i> คลิกเพื่อเริ่มร่ายมนตร์ให้หน้าเว็บ
+        </div>
+    </div>
+
+    <div id="book-inside" class="flex-column">
+        <div id="page-wrapper">
+            <div id="page-content">
+                </div>
+        </div>
+
+        <div class="mt-auto d-flex justify-content-between align-items-center">
+            <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <div class="small text-muted">หน้า <span id="pageNum">1</span> / 10 </div>
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const lessons = [
+            { id: 1, title: "Selectors & Syntax", desc: "จุดเริ่มต้นของการแต่งเว็บ เรียนรู้วิธีการเลือก Element เป้าหมายด้วย ID, Class และการเขียน Rule เบื้องต้น", link: "css 1.html" },
+            { id: 2, title: "Colors & Backgrounds", desc: "เติมสีสันให้โลกดิจิทัลด้วย HEX, RGB, HSL และเทคนิคการวางรูปพื้นหลังให้ดูเป็นมืออาชีพ", link: "css 2.html" },
+            { id: 3, title: "The Box Model", desc: "หัวใจสำคัญของการจัดเลย์เอาต์ เข้าใจเรื่อง Margin, Border, Padding และการคำนวณพื้นที่ของธาตุ", link: "css 3.html" },
+            { id: 4, title: "Typography & Fonts", desc: "ศาสตร์แห่งตัวอักษร การเลือกใช้ Web Fonts การจัดการระยะห่าง และการจัดวางข้อความให้อ่านง่าย", link: "css 4.html" },
+            { id: 5, title: "Flexbox Layout", desc: "มิติใหม่ของการจัดวางธาตุในแนวเดียว จัดการความยืดหยุ่นและการจัดตำแหน่งกึ่งกลางได้อย่างง่ายดาย", link: "css 5.html" },
+            { id: 6, title: "CSS Grid System", desc: "ก้าวสู่การสร้างเลย์เอาต์ 2 มิติที่ซับซ้อน แบ่งหน้าเว็บเป็นแถวและคอลัมน์เหมือนนิตยสารชั้นนำ", link: "css 6.html" },
+            { id: 7, title: "Responsive Design", desc: "ทำให้หน้าเว็บสวยงามในทุกหน้าจอด้วย Media Queries และหลักการ Mobile-First Design", link: "css 7.html" },
+            { id: 8, title: "Transitions & Animations", desc: "สร้างชีวิตชีวาด้วยการเคลื่อนไหว เปลี่ยนสถานะธาตุอย่างนุ่มนวล และการร่าย Keyframes อนิเมชั่น", link: "css 8.html" },
+            { id: 9, title: "CSS Variables & Best Practice", desc: "เขียน CSS อย่างชาญฉลาดด้วยตัวแปร (Custom Properties) และการจัดโครงสร้างไฟล์ให้ดูแลรักษาง่าย", link: "css 9.html" },
+            { id: 10, title: "Quiz", desc: "การสอบที่รวม 9 บท 30 ข้อ", link: "cssquiz.html" },
+        ];
+
+        let currentPage = 0;
+
+        function openBook() {
+            document.getElementById('book-cover').classList.add('book-opened');
+            setTimeout(() => {
+                document.getElementById('book-cover').style.display = 'none';
+                document.getElementById('book-inside').style.display = 'flex';
+                renderPage();
+            }, 600);
+        }
+
+        function renderPage() {
+            const lesson = lessons[currentPage];
+            document.getElementById('page-content').innerHTML = `
+                <div class="badge-step">Module ${lesson.id}</div>
+                <h2 class="lesson-title">${lesson.title}</h2>
+                <p class="lesson-desc">${lesson.desc}</p>
+                <div class="text-center mb-4">
+                    <a href="${lesson.link}" class="btn-enter w-100 py-3">เข้าสู่บทเรียน CSS <i class="bi bi-palette ms-2"></i></a>
+                </div>
+            `;
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+            document.getElementById('nextBtn').disabled = currentPage === lessons.length - 1;
+        }
+
+        function changePage(step) {
+            const book = document.getElementById('book-inside');
+            const animClass = step === 1 ? 'page-flip-next' : 'page-flip-prev';
+            
+            book.classList.remove('page-flip-next', 'page-flip-prev');
+            void book.offsetWidth; 
+            book.classList.add(animClass);
+
+            setTimeout(() => {
+                currentPage += step;
+                renderPage();
+            }, 300);
+        }
+    </script>
+</body>
+</html>

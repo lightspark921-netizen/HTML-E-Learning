@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนที่ 9 - PHP File Handling & Upload</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #fdfcf0;
+            --ink: #2b2d42;
+            --php-purple: #4f5b93; /* เปลี่ยนเป็นสี PHP */
+            --dark-purple: #384161;
+            --desk: #cbd5e1;
+            --preview-bg: #ffffff;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 850px; /* เพิ่มความสูงเล็กน้อย */
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-wrapper.is-open { width: 1200px; }
+
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: var(--php-purple); left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid var(--dark-purple); box-shadow: 15px 0 50px rgba(0,0,0,0.3);
+            cursor: pointer; backface-visibility: hidden;
+            background-image: linear-gradient(135deg, var(--php-purple) 0%, #31395e 100%);
+        }
+
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        /* ตกแต่งหน้าปกเพิ่มเติม */
+        .cover-pattern {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            opacity: 0.1; pointer-events: none;
+            background-image: radial-gradient(#fff 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .notebook {
+            position: absolute; width: 1200px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { 
+            flex: 1; padding: 40px 60px; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+        }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--php-purple); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; font-weight: 700; font-size: 1.6rem; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: var(--ink); margin-top: 20px; font-weight: 700; border-left: 4px solid var(--php-purple); padding-left: 10px; font-size: 1.1rem; }
+        p { line-height: 1.6; font-size: 0.95rem; color: #333; margin-bottom: 1rem; }
+
+        .code-block { 
+            background: #282c34; color: #abb2bf; padding: 15px; 
+            border-radius: 10px; font-family: 'Consolas', monospace; 
+            font-size: 0.8rem; margin: 15px 0; border-left: 5px solid var(--php-purple);
+            line-height: 1.4;
+        }
+        
+        .tip-box { background: #f0f4ff; border-radius: 8px; padding: 15px; border-left: 5px solid var(--php-purple); margin: 15px 0; font-size: 0.85rem; }
+        .tag-badge { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-weight: bold; color: var(--php-purple); font-size: 0.85rem; }
+
+        #editor { width: 100%; height: 180px; font-family: monospace; padding: 10px; border-radius: 8px; border: 1px solid #ccc; }
+        #live-preview { width: 100%; height: 200px; background: white; border: 2px dashed #bbb; border-radius: 8px; padding: 10px; overflow: auto; }
+
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; border-top: 1px solid #eee; border-radius: 0 0 20px 5px; z-index: 10;
+        }
+
+        .btn-nav { background: var(--ink); color: white; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; transition: 0.3s; font-size: 0.9rem; }
+        .btn-nav:hover:not(:disabled) { background: var(--php-purple); transform: translateY(-2px); }
+        .btn-next-chapter { background: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+        <div class="cover-pattern"></div>
+        <div style="width:130px; height:130px; background:white; border-radius:30px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; transform: rotate(-10deg); box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+            <i class="bi bi-file-earmark-arrow-up-fill" style="font-size:4.5rem; color:var(--php-purple)"></i>
+        </div>
+        <h1 class="display-4 fw-bold" style="font-family: 'Chakra Petch';">PHP 8</h1>
+        <p class="lead">SERVER-SIDE MASTERCLASS</p>
+        <div style="width: 100px; height: 5px; background: #8892be; margin: 20px 0; border-radius: 2px;"></div>
+        <h5 class="fw-bold text-uppercase" style="letter-spacing: 2px;">Unit 09: File Handling & Upload</h5>
+        <p class="small opacity-75">การจัดการไฟล์และการอัปโหลดระดับมืออาชีพ</p>
+        <div class="mt-4 small animate-bounce"><i class="bi bi-mouse3"></i> Click to Open System Log</div>
+    </div>
+
+    <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+                <button class="btn-nav" style="background:#64748b" onclick="window.location.href='course_php.html'"><i class="bi bi-house">เลือกบทเรียน</i></button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            <div class="fw-bold text-muted">หน้า <span id="pageNum">1</span> / <span id="totalPage">8</span></div>
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>ถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const content = [
+    {
+        left: `
+            <h2>1. พื้นฐานการจัดการไฟล์</h2>
+            <p>ในภาษา PHP การจัดการไฟล์ (File Handling) เป็นส่วนสำคัญมาก ไม่ว่าจะเป็นการสร้างไฟล์ Log, การเก็บข้อมูลเบื้องต้น หรือการอ่านไฟล์ Config</p>
+            <h4>ฟังก์ชันหลักที่ต้องรู้จัก</h4>
+            <p>PHP ใช้ฟังก์ชันตระกูล <code>fopen()</code> ในการเปิด "ประตู" เชื่อมต่อกับไฟล์ โดยเราต้องกำหนด <b>Mode</b> ในการเปิดเสมอ:</p>
+            <ul>
+                <li><b>'r'</b>: Read (อ่านอย่างเดียว)</li>
+                <li><b>'w'</b>: Write (เขียนทับไฟล์เดิม/สร้างใหม่)</li>
+                <li><b>'a'</b>: Append (เขียนต่อท้ายข้อมูลเดิม)</li>
+            </ul>
+            <div class="tip-box">
+                <i class="bi bi-exclamation-circle"></i> <b>สำคัญมาก:</b> เมื่อเปิดไฟล์ด้วย <code>fopen()</code> แล้ว นายต้องปิดมันเสมอด้วย <code>fclose()</code> เพื่อคืนทรัพยากรให้ Server
+            </div>
+        `,
+        right: `
+            <h4>ตัวอย่างการอ่านไฟล์</h4>
+            <div class="code-block">
+                $file = fopen("data.txt", "r");<br>
+                echo fread($file, filesize("data.txt"));<br>
+                fclose($file);
+            </div>
+            <h4>วิธีที่สั้นกว่า (Modern PHP)</h4>
+            <p>ถ้านายแค่อยากอ่านหรือเขียนไฟล์แบบเร็วๆ ไม่ต้องจัดการ Stream เอง แนะนำให้ใช้:</p>
+            <ul>
+                <li><code>file_get_contents()</code>: อ่านทั้งไฟล์มาเป็น String</li>
+                <li><code>file_put_contents()</code>: เขียนข้อมูลลงไฟล์ในบรรทัดเดียว</li>
+            </ul>
+            <p class="small text-muted">วิธีหลังนี้ PHP จะจัดการเปิดและปิดไฟล์ให้เราอัตโนมัติ สะดวกสุดๆ!</p>
+        `
+    },
+    {
+        left: `
+            <h2>2. การเขียนข้อมูลลงไฟล์</h2>
+            <p>การเขียนไฟล์ใน PHP มีความยืดหยุ่นสูง นายสามารถเลือกได้ว่าจะลบของเก่าแล้วเขียนใหม่ หรือจะต่อท้าย (Log Style)</p>
+            <div class="code-block">
+                $txt = "John Doe\\n";<br>
+                // เขียนทับด้วย 'w'<br>
+                file_put_contents("user.txt", $txt);<br><br>
+                // เขียนต่อท้ายด้วย FILE_APPEND<br>
+                file_put_contents("log.txt", $txt, FILE_APPEND);
+            </div>
+             <h4>Permission (สิทธิ์การเข้าถึง)</h4>
+            <p>ปัญหาส่วนใหญ่ที่มือใหม่เจอคือ <b>"Permission Denied"</b></p>
+            <p>บนระบบ Linux/Unix นายต้องตรวจสอบว่าโฟลเดอร์นั้นๆ อนุญาตให้ PHP (มักเป็น user www-data) เขียนไฟล์ได้หรือไม่ โดยใช้คำสั่ง <code>chmod 755</code> หรือ <code>777</code> ในกรณีทดสอบ</p>
+            <div class="tip-box" style="background:#fff3cd">
+                <i class="bi bi-shield-lock"></i> <b>Security Note:</b> อย่าตั้งค่า 777 ใน Production เด็ดขาด เพราะใครๆ ก็จะสามารถเขียนไฟล์แปลกปลอมลงเว็บนายได้!
+                </div>
+        `,
+        right: `
+            <h2>3. การตรวจสอบไฟล์และโฟลเดอร์</h2>
+            <p>ก่อนจะทำอะไรกับไฟล์ นายควรเป็นโปรแกรมเมอร์ที่รอบคอบด้วยการ "เช็คก่อนใช้"</p>
+            <h4>ฟังก์ชันเช็คสถานะ:</h4>
+            <ul>
+                <li><span class="tag-badge">file_exists()</span> : ไฟล์นี้มีอยู่จริงไหม?</li>
+                <li><span class="tag-badge">is_writable()</span> : เราเขียนมันได้หรือเปล่า?</li>
+                <li><span class="tag-badge">filesize()</span> : ขนาดกี่ Byte?</li>
+                <li><span class="tag-badge">unlink()</span> : ใช้สำหรับ <b>ลบไฟล์</b></li>
+            </ul>
+            <h4>ตัวอย่างการลบอย่างปลอดภัย</h4>
+            <div class="code-block">
+                $target = "old_report.pdf";<br>
+                if (file_exists($target)) {<br>
+                &nbsp;&nbsp;unlink($target);<br>
+                &nbsp;&nbsp;echo "ลบไฟล์สำเร็จ";<br>
+                } else {<br>
+                &nbsp;&nbsp;echo "ไม่พบไฟล์";<br>
+                }
+            </div>
+            <p>การเช็ค <code>file_exists()</code> ก่อนลบ จะช่วยป้องกันไม่ให้ PHP พ่น Error น่าเกลียดออกมาหน้าเว็บครับ</p>
+        `
+    },
+    {
+        left: `
+           <h2>4. เตรียมพร้อมการอัปโหลดไฟล์</h2>
+            <p>นี่คือจุดเริ่มของงานจริง! การอัปโหลดไฟล์ (File Upload) มีกระบวนการที่ซับซ้อนกว่าการรับค่า Text ทั่วไป</p>
+            <h4>สิ่งที่ต้องตั้งค่าใน php.ini</h4>
+            <p>หากอัปโหลดไฟล์ไม่ได้ ให้ลองเช็คค่าเหล่านี้ใน Server:</p>
+            <ol>
+                <li><code>file_uploads = On</code> (ต้องเปิดใช้งาน)</li>
+                <li><code>upload_max_filesize</code> (ขนาดไฟล์สูงสุดต่อ 1 ไฟล์)</li>
+                <li><code>post_max_size</code> (ขนาดข้อมูลรวมที่ส่งผ่าน POST ได้)</li>
+            </ol>
+            <h4>กลไกการทำงาน</h4>
+            <p>เมื่อผู้ใช้กด Upload:</p>
+            <ol>
+                <li>ไฟล์จะถูกส่งไปพักที่ <b>Temporary Directory</b> ใน Server</li>
+                <li>PHP จะสร้างตัวแปร Global ชื่อ <code>$_FILES</code> ขึ้นมา</li>
+                <li>เราต้องสั่ง <b>Move</b> ไฟล์จากที่พักชั่วคราว ไปยังโฟลเดอร์ที่เราต้องการ</li>
+            </ol>
+            <p class="small">ถ้าเราไม่สั่งย้าย ไฟล์ชั่วคราวจะถูกลบทิ้งทันทีเมื่อจบการทำงานของสคริปต์!</p>
+        `,
+        right: `
+            <h2>5. การสร้างฟอร์มอัปโหลด (HTML Detail)</h2>
+            <p>หัวใจสำคัญที่สุดของการอัปโหลดไฟล์อยู่ที่ตัว HTML Form หากตั้งค่าผิดแม้แต่นิดเดียว <code>$_FILES</code> จะว่างเปล่าทันที!</p>
+            
+            <h4>กฎเหล็ก 3 ข้อของฟอร์มอัปโหลด:</h4>
+            <ol>
+                <li>ต้องใช้ <b>method="POST"</b> เท่านั้น (GET ส่งไฟล์ไม่ได้)</li>
+                <li>ต้องระบุ <b>enctype="multipart/form-data"</b> นี่คือตัวบอกเบราว์เซอร์ให้ส่งข้อมูลแบบ Binary</li>
+                <li>อินพุตต้องมี <b>type="file"</b></li>
+            </ol>
+
+            <div class="code-block">
+                &lt;form action="upload.php" method="post" <b>enctype="multipart/form-data"</b>&gt;<br>
+                &nbsp;&nbsp;&lt;input type="file" name="myFile"&gt;<br>
+                &nbsp;&nbsp;&lt;button type="submit"&gt;Upload&lt;/button&gt;<br>
+                &lt;/form&gt;
+            </div>
+
+            <h4>เจาะลึก Attribute ที่สำคัญ:</h4>
+            <p><b>accept:</b> นายสามารถจำกัดประเภทไฟล์ที่ฝั่งเบราว์เซอร์ได้ เช่น <code>accept="image/*"</code> จะทำให้ผู้ใช้เลือกได้เฉพาะไฟล์รูปภาพ</p>
+            <p><b>multiple:</b> หากต้องการอัปโหลดหลายไฟล์พร้อมกัน ให้ใส่ attribute นี้ และตั้งชื่อ name เป็น array เช่น <code>name="files[]"</code></p>
+        `
+        
+    },
+    {
+        left: `
+            <h4>ตารางเจาะลึกตัวแปร $_FILES</h4>
+            <p>เมื่อไฟล์ส่งมาถึง PHP นายจะได้ Array หน้าตาแบบนี้ (สมมติ name="myFile"):</p>
+            <table class="table table-sm table-bordered" style="font-size:0.8rem;">
+                <thead class="table-dark">
+                    <tr><th>คีย์</th><th>คำอธิบาย</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>$_FILES['myFile']['name']</code></td><td>ชื่อไฟล์ต้นฉบับ (เช่น cat.jpg)</td></tr>
+                    <tr><td><code>$_FILES['myFile']['type']</code></td><td>MIME Type (เช่น image/jpeg)</td></tr>
+                    <tr><td><code>$_FILES['myFile']['size']</code></td><td>ขนาดไฟล์ (หน่วยเป็น Bytes)</td></tr>
+                    <tr><td><code>$_FILES['myFile']['tmp_name']</code></td><td>ที่อยู่ไฟล์ชั่วคราวบน Server</td></tr>
+                    <tr><td><code>$_FILES['myFile']['error']</code></td><td>รหัสข้อผิดพลาด (0 คือปกติ)</td></tr>
+                </tbody>
+            </table>
+            
+            <h4>Checklist สำหรับ Developer:</h4>
+            <ul class="small">
+                <li>[ ] ตรวจสอบว่าปุ่ม Submit อยู่ภายใน Tag <code>&lt;form&gt;</code></li>
+                <li>[ ] เช็คว่าสะกด <code>multipart/form-data</code> ถูกต้องทุกตัวอักษร</li>
+                <li>[ ] มั่นใจว่า <code>tmp_name</code> มีค่าก่อนที่จะประมวลผลต่อ</li>
+                <li>[ ] จำกัดขนาดไฟล์ในฝั่ง Client เพื่อ UX ที่ดี</li>
+            </ul>
+            <div class="tip-box">
+                <i class="bi bi-info-circle"></i> <b>Pro Tip:</b> นายสามารถใช้ JavaScript เพื่อเช็คขนาดไฟล์ก่อนที่ผู้ใช้จะกดส่ง เพื่อประหยัด Bandwidth ของ Server ได้นะ!
+            </div>
+        `,
+        right: `
+           <h2>6. การประมวลผลไฟล์ด้วย PHP</h2>
+            <p>เมื่อได้ไฟล์มาแล้ว เราจะใช้ฟังก์ชัน <code>move_uploaded_file()</code> เพื่อย้ายไฟล์ไปยังที่อยู่ถาวร</p>
+            <div class="code-block">
+                $target_dir = "uploads/";<br>
+                $target_file = $target_dir . basename($_FILES["myFile"]["name"]);<br><br>
+                if (move_uploaded_file($_FILES["myFile"]["tmp_name"], $target_file)) {<br>
+                &nbsp;&nbsp;echo "ไฟล์ถูกเก็บที่: " . $target_file;<br>
+                } else {<br>
+                &nbsp;&nbsp;echo "เกิดข้อผิดพลาด!";<br>
+                }
+            </div>
+            <h4>ฟังก์ชัน basename()</h4>
+            <p>ช่วยสกัดเอาเฉพาะชื่อไฟล์ออกมา ป้องกันการโจมตีแบบ <b>Directory Traversal</b> (เช่น ผู้ใช้พยายามตั้งชื่อไฟล์เป็น <code>../../config.php</code>)</p>
+            <div class="tip-box">
+                <i class="bi bi-lightbulb"></i> <b>ไอเดียเจ๋งๆ:</b> เพื่อป้องกันไฟล์ชื่อซ้ำกัน นายควรเปลี่ยนชื่อไฟล์ใหม่โดยใช้ <code>time()</code> หรือ <code>uniqid()</code> ต่อท้ายชื่อเดิมครับ
+            </div>
+        `
+    },
+    {
+        left: `
+           <h2>7. ความปลอดภัย (Security First)</h2>
+            <p>การเปิดให้อัปโหลดไฟล์คือการเปิดช่องโหว่ที่ใหญ่ที่สุดถ้านายไม่ระวัง!</p>
+            <h4>สิ่งที่ต้องตรวจสอบ:</h4>
+            <ol>
+                <li><b>ประเภทไฟล์:</b> เช็คจากนามสกุลหรือ MIME Type ห้ามให้ใครอัป .php, .exe, .sh</li>
+                <li><b>ขนาดไฟล์:</b> อย่าปล่อยให้ใครอัปไฟล์ 1GB มาเต็ม Disk นาย</li>
+                <li><b>ตั้งชื่อใหม่:</b> หลีกเลี่ยงการใช้ชื่อเดิมจากผู้ใช้</li>
+            </ol>
+            <h4>ตัวอย่างการเช็คนามสกุล</h4>
+            <div class="code-block">
+                $ext = pathinfo($filename, PATHINFO_EXTENSION);<br>
+                $allowed = ['jpg', 'png', 'pdf'];<br><br>
+                if (!in_array($ext, $allowed)) {<br>
+                &nbsp;&nbsp;die("อนุญาตเฉพาะ JPG, PNG, PDF เท่านั้น");<br>
+                }
+            </div>
+            <p>จำไว้ว่า: <b>"ห้ามเชื่อข้อมูลที่มาจาก User เด็ดขาด"</b> (Never trust user input)</p>
+        `,
+        right: `
+            
+        `
+    },
+
+    {
+        left: `
+            <h2>8. สรุปและการทดลอง</h2>
+            <p>นายได้เรียนรู้วงจรการจัดการไฟล์ตั้งแต่ต้นจนจบแล้ว! ลองนำความรู้มาเขียน Code จริงใน Playground ด้านล่างนี้ดูสิ</p>
+            <h4>โจทย์ฝึกฝน:</h4>
+            <ul class="small">
+                <li>ลองเขียนโค้ดแสดงชื่อไฟล์ที่อัปโหลด</li>
+                <li>ลองเช็คว่าถ้าไฟล์ใหญ่กว่า 2MB ให้แสดงคำเตือน</li>
+                <li>ลองสร้างระบบ Log ง่ายๆ ด้วย <code>file_put_contents</code></li>
+            </ul>
+            <textarea id="editor" spellcheck="false" oninput="updatePreview()">
+<?php
+// จำลองการตรวจสอบไฟล์
+$fileName = "profile.jpg";
+$fileSize = 1500000; // 1.5MB
+
+if($fileSize > 2000000) {
+    echo "Error: ไฟล์ใหญ่เกินไป!";
+} else {
+    echo "ไฟล์ $fileName พร้อมอัปโหลด ✅";
+}
+?></textarea>
+        `,
+        right: `
+            <h4>Output Simulation:</h4>
+            <div id="live-preview"></div>
+            <div class="tip-box" style="background: #d4edda; border-color: #c3e6cb; margin-top:20px;">
+                <i class="bi bi-trophy"></i> <b>Unit 09 Completed!</b><br>
+                นายเก่งมาก! ตอนนี้นายสามารถจัดการไฟล์บน Server ได้อย่างมั่นใจแล้ว บทถัดไปเราจะไปลุยเรื่อง Database กัน!
+            </div>
+            <button class="btn-nav w-100 btn-next-chapter">Next: MySQL Basics <i class="bi bi-database"></i></button>
+        `
+    }
+];
+
+    let currentPage = 0;
+    let isOpen = false;
+
+    document.getElementById('totalPage').innerText = content.length;
+
+    function openBook() {
+        if (isOpen) return;
+        isOpen = true;
+        document.getElementById('wrapper').classList.add('is-open');
+        document.getElementById('bookCover').classList.add('opened');
+        setTimeout(renderPage, 300);
+    }
+
+    function renderPage() {
+        const set = content[currentPage];
+        const left = document.getElementById('left-page');
+        const right = document.getElementById('right-page');
+        
+        left.style.opacity = 0;
+        right.style.opacity = 0;
+        
+        setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+              if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป</span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'quizphp.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+        }, 150);
+    }
+
+    function changePage(step) {
+        if (currentPage + step >= 0 && currentPage + step < content.length) {
+            currentPage += step;
+            renderPage();
+        }
+    }
+
+    function updatePreview() {
+        const code = document.getElementById('editor').value;
+        const preview = document.getElementById('live-preview');
+        if(preview) {
+            // จำลองการรัน PHP (แสดงผลเป็นข้อความ)
+            let output = code.replace(/<\?php|<\?|\?>/g, '');
+            output = output.includes('echo') ? "System Output: <br><b>" + output.split('echo')[1].replace(/['";]/g, '') + "</b>" : "Write some echo to see output...";
+            preview.innerHTML = output;
+        }
+    }
+</script>
+</body>
+</html>

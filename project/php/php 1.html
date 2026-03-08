@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนที่ 1 - PHP Complete Notebook</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #fdfcf0;
+            --ink: #2b2d42;
+            --php-purple: #777bb4;
+            --dark-purple: #4f5b93;
+            --desk: #cbd5e1;
+            --preview-bg: #ffffff;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow-x: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 800px;
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-wrapper.is-open { width: 1200px; }
+
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: var(--php-purple); left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid var(--dark-purple); box-shadow: 15px 0 50px rgba(0,0,0,0.3);
+            cursor: pointer; backface-visibility: hidden;
+        }
+
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        .notebook {
+            position: absolute; width: 1200px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { 
+            flex: 1; padding: 40px 50px; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+        }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--dark-purple); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; font-weight: 700; font-size: 1.6rem; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: var(--ink); margin-top: 15px; font-weight: 700; border-left: 4px solid var(--php-purple); padding-left: 10px; font-size: 1.1rem; }
+        p { line-height: 1.6; font-size: 0.95rem; color: #333; margin-bottom: 0.8rem; }
+
+        .code-block { 
+            background: #282c34; color: #abb2bf; padding: 15px; 
+            border-radius: 10px; font-family: 'Consolas', monospace; 
+            font-size: 0.8rem; margin: 10px 0; border-left: 5px solid var(--php-purple);
+            line-height: 1.4; position: relative;
+        }
+        
+        .tag { color: #c678dd; } .var { color: #e06c75; } .val { color: #98c379; } .comment { color: #5c6370; font-style: italic; }
+
+        .tip-box { background: #f0f4ff; border-radius: 8px; padding: 12px; border-left: 5px solid var(--php-purple); margin: 15px 0; font-size: 0.85rem; }
+        .highlight { color: var(--dark-purple); font-weight: bold; }
+
+        #editor { width: 100%; height: 180px; font-family: monospace; padding: 10px; border-radius: 8px; border: 1px solid #ccc; margin-bottom: 10px; }
+        #live-preview { width: 100%; height: 200px; background: white; border: 2px dashed #bbb; border-radius: 8px; padding: 10px; overflow: auto; }
+
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 60px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; border-top: 1px solid #eee; border-radius: 0 0 20px 5px; z-index: 10;
+        }
+
+        .btn-nav { background: var(--dark-purple); color: white; border: none; padding: 6px 18px; border-radius: 50px; font-weight: bold; transition: 0.3s; font-size: 0.85rem; }
+        .btn-nav:hover:not(:disabled) { background: var(--php-purple); transform: translateY(-2px); }
+        .btn-next-chapter { background: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+         <div style="width:140px; height:140px; background:rgba(255,255,255,0.2); border-radius:30px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; border: 2px solid white;">
+            <i class="bi bi-filetype-php" style="font-size:5rem; color:white"></i>
+        </div>
+        <h1 class="display-5 fw-bold" style="font-family: 'Chakra Petch';">PHP : SCRIPTING</h1>
+        <p class="lead">BACK-END MASTERCLASS</p>
+        <div style="width: 100px; height: 4px; background: white; margin: 15px 0; border-radius: 2px;"></div>
+        <h5 class="fw-bold">UNIT 01: SYNTAX & VARIABLES</h5>
+        <p class="small opacity-75">การประมวลผลฝั่ง Server และการจัดการข้อมูล</p>
+        <div class="mt-4 small animate-bounce"><i class="bi bi-cursor-fill"></i> OPEN THE SERVER LOG</div>
+    </div>
+
+     <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+                <button class="btn-nav" style="background:#64748b" onclick="window.location.href='course_php.html'"><i class="bi bi-house">เลือกบทเรียน</i></button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            <div class="fw-bold text-muted">หน้า <span id="pageNum">1</span> / <span id="totalPage">8</span></div>
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>ถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const content = [
+    {
+        left: `
+            <h2>1. ความเข้าใจเกี่ยวกับ PHP</h2>
+            <p>PHP เป็นภาษาประเภท <span class="highlight">Server-Side Scripting</span> หมายความว่าโค้ดจะถูกประมวลผลที่เครื่อง Server ก่อนจะส่งผลลัพธ์ที่เป็น HTML มาให้เราดู</p>
+            <h4>โครงสร้างการเขียน Tag</h4>
+            <p>เราต้องครอบโค้ด PHP ไว้ในแท็กพิเศษเพื่อให้ Server รู้ว่าส่วนไหนคือโปรแกรม:</p>
+            <div class="code-block">
+                <span class="tag">&lt;?php</span><br>
+                &nbsp;&nbsp;<span class="comment">// เขียนโค้ดตรงนี้</span><br>
+                <span class="tag">?&gt;</span>
+            </div>
+            <p>หากไฟล์นั้นมีแต่ PHP อย่างเดียว เรานิยม <b>ไม่ปิดแท็ก</b> <code>?&gt;</code> เพื่อป้องกันปัญหาช่องว่างหลังแท็กที่อาจส่งผลต่อ HTTP Header</p>
+            <div class="tip-box">
+                <i class="bi bi-terminal"></i> <b>การสิ้นสุดคำสั่ง:</b> PHP บังคับให้ต้องปิดท้ายทุกคำสั่งด้วยเครื่องหมาย <span class="highlight">Semicolon ( ; )</span> เสมอ มิฉะนั้นจะเกิด Parse Error ทันที!
+            </div>
+        `,
+        right: `
+            <h4>การแทรก PHP ใน HTML</h4>
+            <p>เราสามารถฝัง PHP ไว้ที่ไหนก็ได้ในหน้าเว็บ เพื่อสร้างเนื้อหาแบบ Dynamic:</p>
+            <div class="code-block">
+                &lt;h1&gt; <span class="tag">&lt;?php</span> <span class="tag">echo</span> <span class="val">"สวัสดี"</span>; <span class="tag">?&gt;</span> &lt;/h1&gt;
+            </div>
+            <h4>Case Sensitivity (ความอ่อนไหวของตัวอักษร)</h4>
+            <p>ใน PHP คีย์เวิร์ดอย่าง (if, else, echo) <b>ไม่ไวต่อตัวอักษร</b> (Case-insensitive) แต่นายต้องระวัง!</p>
+            <ul>
+                <li><code>ECHO</code> หรือ <code>echo</code> ทำงานเหมือนกัน</li>
+                <li>แต่ <span class="highlight">ชื่อตัวแปร</span> ไวต่อตัวอักษร (Case-sensitive) เช่น <code>$name</code> กับ <code>$Name</code> คือคนละตัวกัน</li>
+            </ul>
+            <p><b>คำแนะนำ:</b> ควรเขียนทุกอย่างเป็นตัวพิมพ์เล็กเพื่อลดความสับสนและเป็นมาตรฐานสากลครับ</p>
+        `
+    },
+    {
+        left: `
+            <h2>2. การประกาศตัวแปร (Variables)</h2>
+            <p>ตัวแปรคือ "กล่อง" สำหรับเก็บข้อมูล โดยใน PHP เรามีกฎเหล็กที่ห้ามลืมคือต้องขึ้นต้นด้วย <span class="highlight">$ (Dollar Sign)</span> เสมอ</p>
+            <div class="code-block">
+                <span class="var">$score</span> = <span class="val">100</span>;<br>
+                <span class="var">$userName</span> = <span class="val">"Admin"</span>;
+            </div>
+            <h4>กฎการตั้งชื่อตัวแปร:</h4>
+            <ul>
+                <li>ต้องขึ้นต้นด้วย <code>$</code> และตามด้วยตัวอักษรหรือ <code>_</code> เท่านั้น</li>
+                <li>ห้ามขึ้นต้นด้วยตัวเลข (แต่ตัวเลขอยู่ตรงกลางหรือท้ายได้)</li>
+                <li>ห้ามมีช่องว่างหรือสัญลักษณ์พิเศษยกเว้น Underscore</li>
+            </ul>
+            <p>PHP เป็นภาษาแบบ <span class="highlight">Loosely Typed</span> คือเราไม่ต้องระบุว่าตัวแปรนี้เป็นชนิดอะไร (int, string) PHP จะเดาให้เองจากค่าที่เราใส่ลงไป</p>
+        `,
+        right: `
+            <h4>Variable Scope (ขอบเขตตัวแปร)</h4>
+            <p>ตัวแปรไม่ได้เข้าถึงได้ทุกที่เสมอไป มี 3 ระดับหลักที่นายต้องรู้:</p>
+            <ol>
+                <li><b>Local:</b> ตัวแปรที่ประกาศในฟังก์ชัน ใช้ได้แค่ในนั้น</li>
+                <li><b>Global:</b> ตัวแปรที่ประกาศข้างนอกฟังก์ชัน</li>
+                <li><b>Static:</b> ตัวแปรที่เก็บค่าไว้แม้ฟังก์ชันจะทำงานจบไปแล้ว</li>
+            </ol>
+            <div class="tip-box" style="background: #fff3cd;">
+                <i class="bi bi-exclamation-circle"></i> <b>ระวัง:</b> การเข้าถึง Global Variable ในฟังก์ชัน นายต้องใช้คีย์เวิร์ด <code>global $var;</code> นำหน้าก่อนใช้งานนะเพื่อน
+            </div>
+            <p>การจัดการ Scope ที่ดีจะช่วยลดบั๊กที่เกิดจากการทับซ้อนกันของชื่อตัวแปรในโปรเจกต์ขนาดใหญ่</p>
+        `
+    },
+    {
+        left: `
+            <h2>3. การแสดงผล (Echo & Print)</h2>
+            <p>การส่งข้อมูลออกมาที่หน้าจอมี 2 คำสั่งหลักที่ทำงานคล้ายกันแต่มีจุดต่างเล็กน้อย</p>
+            <h4>1. echo</h4>
+            <p>เป็นคำสั่งยอดนิยมที่สุด เพราะทำงานเร็วและสามารถรับค่าหลายค่าพร้อมกันได้ (ใช้ comma คั่น)</p>
+            <div class="code-block">
+                <span class="tag">echo</span> <span class="val">"Hello"</span>, <span class="val">" World"</span>;
+            </div>
+            <h4>2. print</h4>
+            <p>จะส่งค่ากลับเป็น 1 เสมอ (เหมือนเป็น function) จึงทำงานช้ากว่า echo เล็กน้อย และรับได้แค่ค่าเดียว</p>
+            <div class="code-block">
+                <span class="tag">print</span> <span class="val">"Learn PHP"</span>;
+            </div>
+        `,
+        right: `
+            <h4>ความลับของ Double Quotes ( " )</h4>
+            <p>PHP มีความฉลาดในการประมวลผล String ถ้าใช้ฟันหนูคู่ นายสามารถใส่ตัวแปรลงไปข้างในได้เลย!</p>
+            <div class="code-block">
+                <span class="var">$name</span> = <span class="val">"John"</span>;<br>
+                <span class="tag">echo</span> <span class="val">"สวัสดี $name"</span>; <span class="comment">// ผลคือ สวัสดี John</span>
+            </div>
+            <p>แต่ถ้าใช้ Single Quotes ( ' ) PHP จะมองทุกอย่างเป็นแค่ตัวอักษรธรรมดา:</p>
+            <div class="code-block">
+                <span class="tag">echo</span> <span class="val">'สวัสดี $name'</span>; <span class="comment">// ผลคือ สวัสดี $name</span>
+            </div>
+            <p><b>Tip:</b> การใช้ Single Quotes จะประมวลผลเร็วกว่านิดหน่อย เพราะ PHP ไม่ต้องเสียเวลาควานหาตัวแปรข้างใน</p>
+        `
+    },
+    {
+        left: `
+            <h2>4. ชนิดข้อมูล (Data Types)</h2>
+            <p>แม้ PHP จะเดาชนิดข้อมูลให้เอง แต่นายต้องเข้าใจพื้นฐานเพื่อใช้ในการคำนวณหรือเปรียบเทียบ:</p>
+            <table class="table table-sm table-bordered mt-3 small">
+                <tr class="table-dark"><th>Type</th><th>Description</th></tr>
+                <tr><td><b>String</b></td><td>ข้อความ เช่น "Hello"</td></tr>
+                <tr><td><b>Integer</b></td><td>เลขจำนวนเต็ม (ไม่มีทศนิยม)</td></tr>
+                <tr><td><b>Float</b></td><td>เลขทศนิยม (Double)</td></tr>
+                <tr><td><b>Boolean</b></td><td>ค่าจริง (true) หรือ เท็จ (false)</td></tr>
+                <tr><td><b>Array</b></td><td>ชุดข้อมูลที่เก็บได้หลายค่าในตัวแปรเดียว</td></tr>
+            </table>
+            <p>เราสามารถตรวจสอบชนิดข้อมูลและค่าของตัวแปรได้ด้วยคำสั่ง <span class="highlight">var_dump()</span> ซึ่งมีประโยชน์มากเวลา Debug โค้ด</p>
+        `,
+        right: `
+            <h4>การจัดการ String (String Functions)</h4>
+            <p>PHP มีฟังก์ชันจัดการข้อความที่เตรียมไว้ให้เยอะมาก เช่น:</p>
+            <ul>
+                <li><code>strlen($s)</code> : นับความยาวข้อความ</li>
+                <li><code>str_word_count($s)</code> : นับจำนวนคำ</li>
+                <li><code>strrev($s)</code> : กลับด้านข้อความ</li>
+                <li><code>strpos($s, "find")</code> : หาตำแหน่งคำที่ต้องการ</li>
+            </ul>
+            <div class="code-block">
+                <span class="tag">echo</span> <span class="tag">strlen</span>(<span class="val">"PHP"</span>); <span class="comment">// ได้ผลลัพธ์เป็น 3</span>
+            </div>
+            <p>หัดใช้ฟังก์ชันเหล่านี้ให้คล่อง เพราะในชีวิตจริงเราต้องจัดการข้อความจาก User ตลอดเวลาครับ</p>
+        `
+    },
+    {
+        left: `
+            <h2>5. ค่าคงที่ (Constants)</h2>
+            <p>บางครั้งเราต้องการค่าที่ไม่เปลี่ยนเลยตลอดการรันโปรแกรม เช่น ค่า PI หรือ ชื่อ Database เราจะใช้ <span class="highlight">Constants</span></p>
+            <p>การประกาศใช้ฟังก์ชัน <code>define()</code> และที่สำคัญคือ <b>ไม่มีเครื่องหมาย $</b> นำหน้า</p>
+            <div class="code-block">
+                <span class="tag">define</span>(<span class="val">"SITE_URL"</span>, <span class="val">"https://myweb.com"</span>);<br>
+                <span class="tag">echo</span> SITE_URL;
+            </div>
+            <h4>ความต่างจากตัวแปร:</h4>
+            <ul>
+                <li>ค่าคงที่เป็น Global โดยอัตโนมัติ เข้าถึงได้ทุกที่</li>
+                <li>เมื่อกำหนดแล้ว ไม่สามารถเปลี่ยนค่าหรือยกเลิกได้</li>
+                <li>นิยมใช้ตัวพิมพ์ใหญ่ทั้งหมด (Upper Case) เพื่อให้แยกแยะง่าย</li>
+            </ul>
+        `,
+        right: `
+            <h4>Magic Constants</h4>
+            <p>PHP มีค่าคงที่พิเศษที่เปลี่ยนไปตามตำแหน่งที่ใช้งาน เรียกว่า Magic Constants (ขึ้นต้นและลงท้ายด้วย __):</p>
+            <ul>
+                <li><code>__LINE__</code> : บอกเลขบรรทัดปัจจุบัน</li>
+                <li><code>__FILE__</code> : บอกที่อยู่ไฟล์ปัจจุบัน</li>
+                <li><code>__DIR__</code> : บอกชื่อโฟลเดอร์ของไฟล์นี้</li>
+            </ul>
+            <div class="tip-box">
+                <i class="bi bi-magic"></i> Magic Constants เหล่านี้มีประโยชน์มากเวลาเราต้องการดึงไฟล์อื่นเข้ามารวม (Include) ในโปรเจกต์
+            </div>
+            <p>ลองใช้ <code>echo __DIR__;</code> ดูสิ นายจะเห็น Path ทั้งหมดในเครื่อง Server เลยล่ะ</p>
+        `
+    },
+    {
+        left: `
+            <h2>6. การคำนวณ (Operators)</h2>
+            <p>PHP ใช้สัญลักษณ์คณิตศาสตร์พื้นฐานเหมือนเครื่องคิดเลขทั่วไป:</p>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered small">
+                    <tr class="bg-light"><th>สัญลักษณ์</th><th>ความหมาย</th></tr>
+                    <tr><td>+ , - , * , /</td><td>บวก, ลบ, คูณ, หาร</td></tr>
+                    <tr><td>% (Modulus)</td><td>หารเอาเศษ</td></tr>
+                    <tr><td>** (Exponent)</td><td>ยกกำลัง</td></tr>
+                </table>
+            </div>
+            <h4>Increment / Decrement</h4>
+            <p>การเพิ่มหรือลดค่าทีละหนึ่ง นิยมใช้มากใน Loop:</p>
+            <div class="code-block">
+                <span class="var">$x</span>++; <span class="comment">// เหมือน $x = $x + 1</span><br>
+                <span class="var">$x</span>--; <span class="comment">// เหมือน $x = $x - 1</span>
+            </div>
+        `,
+        right: `
+            <h4>String Operators</h4>
+            <p>การนำข้อความมาต่อกัน (Concatenation) PHP ใช้เครื่องหมาย <span class="highlight">จุด ( . )</span></p>
+            <div class="code-block">
+                <span class="var">$txt1</span> = <span class="val">"Hello"</span>;<br>
+                <span class="var">$txt2</span> = <span class="val">"PHP"</span>;<br>
+                <span class="tag">echo</span> <span class="var">$txt1</span> . <span class="val">" "</span> . <span class="var">$txt2</span>;
+            </div>
+            <p>หากต้องการต่อข้อความเพิ่มเข้าในตัวแปรเดิม ให้ใช้ <code>.=</code></p>
+            <div class="code-block">
+                <span class="var">$msg</span> = <span class="val">"Hi"</span>;<br>
+                <span class="var">$msg</span> .= <span class="val">" Friend"</span>;<br>
+                <span class="tag">echo</span> <span class="var">$msg</span>; <span class="comment">// ได้ Hi Friend</span>
+            </div>
+            <p>จำไว้ว่า PHP ไม่ใช้เครื่องหมาย + ในการต่อข้อความเหมือน Java หรือ JS นะครับ</p>
+        `
+    },
+    {
+        left: `
+            <h2>7. การจัดการตัวเลข (Numbers)</h2>
+            <p>PHP จัดการตัวเลขได้อย่างยืดหยุ่น โดยมีฟังก์ชันตรวจสอบชนิดตัวเลขที่แม่นยำ:</p>
+            <ul>
+                <li><code>is_int()</code> : เช็คว่าเป็นจำนวนเต็มไหม</li>
+                <li><code>is_float()</code> : เช็คว่าเป็นทศนิยมไหม</li>
+                <li><code>is_numeric()</code> : เช็คว่าเป็นตัวเลข (หรือสตริงตัวเลข) ไหม</li>
+            </ul>
+            <h4>Casting (การแปลงชนิดข้อมูล)</h4>
+            <p>บางครั้งเราได้ตัวเลขมาจากฟอร์มในรูปแบบ String เราต้องแปลงมันก่อนคำนวณ:</p>
+            <div class="code-block">
+                <span class="var">$x</span> = <span class="val">(int)</span><span class="val">"59.85"</span>;<br>
+                <span class="tag">echo</span> <span class="var">$x</span>; <span class="comment">// ผลลัพธ์คือ 59</span>
+            </div>
+        `,
+        right: `
+            <h4>ฟังก์ชันคณิตศาสตร์ (Math Functions)</h4>
+            <p>ฟังก์ชันพื้นฐานที่นายจะได้ใช้บ่อยๆ ในการพัฒนาเว็บ:</p>
+            <ul>
+                <li><code>pi()</code> : ค่าพาย 3.14...</li>
+                <li><code>min() / max()</code> : หาค่าต่ำสุด/สูงสุด</li>
+                <li><code>abs()</code> : ค่าสัมบูรณ์ (บวกเสมอ)</li>
+                <li><code>sqrt()</code> : ถอดรากที่สอง</li>
+                <li><code>round()</code> : ปัดเศษให้เป็นจำนวนเต็มใกล้เคียง</li>
+                <li><code>rand(min, max)</code> : สุ่มตัวเลข (มีประโยชน์มาก!)</li>
+            </ul>
+            <div class="code-block">
+                <span class="tag">echo</span> <span class="tag">rand</span>(<span class="val">1</span>, <span class="val">10</span>); <span class="comment">// สุ่มเลข 1 ถึง 10</span>
+            </div>
+        `
+    },
+    {
+        left: `
+            <h2>8. สรุป Unit 01 & Playground</h2>
+            <p>นายได้เรียนรู้หัวใจสำคัญของ PHP แล้ว! ทั้ง Syntax, ตัวแปร, และการแสดงผล ลองเขียนโค้ดจริงในช่องข้างล่างนี้ดูสิ</p>
+            <textarea id="editor" spellcheck="false" oninput="updatePreview()">
+<?php
+  $name = "Developer";
+  $age = 25;
+  
+  echo "<h1>Welcome, $name</h1>";
+  echo "<p>Your age is: " . $age . "</p>";
+  echo "Random Luck: " . rand(1, 100);
+?></textarea>
+            <p class="small text-muted">หมายเหตุ: ในระบบจำลองนี้ เราจะประมวลผลผ่าน JS เพื่อจำลองการแสดงผลเบื้องต้นให้นะเพื่อน</p>
+        `,
+        right: `
+            <h4>Server Response (Simulation):</h4>
+            <div id="live-preview"></div>
+            <div class="tip-box" style="background: #d1e7dd; border-color: #badbcc;">
+                <i class="bi bi-check-all"></i> <b>PHP Basics Mastered!</b><br>
+                นายพร้อมสำหรับบทถัดไป: <b>Control Structures (If-Else & Loops)</b> หรือยัง? ถ้าพร้อมแล้วลุยต่อเลย!
+            </div>
+            <p><b>Challenge:</b> ลองประกาศตัวแปรเก็บราคาของ 2 อย่าง แล้วใช้ <code>echo</code> แสดงผลรวมออกมาให้ดูหน่อย!</p>
+        `
+    }
+];
+
+    let currentPage = 0;
+    let isOpen = false;
+
+    document.getElementById('totalPage').innerText = content.length;
+
+    function openBook() {
+        if (isOpen) return;
+        isOpen = true;
+        document.getElementById('wrapper').classList.add('is-open');
+        document.getElementById('bookCover').classList.add('opened');
+        setTimeout(renderPage, 300);
+    }
+
+    function renderPage() {
+        const set = content[currentPage];
+        const left = document.getElementById('left-page');
+        const right = document.getElementById('right-page');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        left.style.opacity = 0;
+        right.style.opacity = 0;
+        
+        setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+              if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป</span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'php 2.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+        }, 150);
+    }
+
+    function changePage(step) {
+        if (currentPage + step >= 0 && currentPage + step < content.length) {
+            currentPage += step;
+            renderPage();
+        }
+    }
+
+    function updatePreview() {
+        const code = document.getElementById('editor').value;
+        const preview = document.getElementById('live-preview');
+        if(preview) {
+            // จำลองการแสดงผล PHP แบบพื้นฐาน (ลบแท็ก PHP ออกแล้วโชว์เนื้อหา)
+            let cleanCode = code.replace(/<\?php|<\?|\?>/g, '');
+            // จำลอง echo/print เบื้องต้น
+            cleanCode = cleanCode.replace(/echo\s+"(.*?)";/g, '$1');
+            cleanCode = cleanCode.replace(/echo\s+'(.*?)';/g, '$1');
+            preview.innerHTML = cleanCode;
+        }
+    }
+</script>
+</body>
+</html>

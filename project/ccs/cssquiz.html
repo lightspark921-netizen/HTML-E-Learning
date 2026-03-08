@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS3 Mastery Quiz - 30 Questions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary: #264de4; /* CSS Blue */
+            --accent: #f7df1e;  /* JavaScript/Modern Yellow */
+            --success: #2ecc71;
+            --bg: #f0f2f5;
+            --white: #ffffff;
+            --gray: #636e72;
+            --dark: #2d3436;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-card {
+            background: var(--white);
+            width: 95%;
+            max-width: 850px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 8px solid var(--primary);
+        }
+
+        h1 { font-family: 'Chakra Petch', sans-serif; color: var(--primary); margin-bottom: 5px; font-size: 2.2rem; }
+        .subtitle { color: var(--gray); margin-bottom: 25px; font-weight: bold; }
+        hr { border: 0; border-top: 1px solid #eee; margin: 20px 0; }
+        
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.5s ease; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 15px;
+            margin: 20px 0;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            outline: none;
+            text-align: center;
+            transition: 0.3s;
+        }
+        input[type="text"]:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(38, 77, 228, 0.1); }
+
+        .btn-group { display: flex; justify-content: space-between; margin-top: 30px; gap: 15px; }
+
+        .btn {
+            flex: 1;
+            padding: 15px 25px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-next { background: var(--primary); color: white; }
+        .btn-next:hover { background: #1a3ab1; transform: translateY(-2px); }
+        .btn-prev { background: #e0e0e0; color: var(--dark); }
+        .btn-start { background: var(--dark); color: white; width: 100%; font-size: 1.2rem; margin-top: 20px; }
+        .btn-lesson { background: #fff; border: 2px solid var(--primary); color: var(--primary); }
+        
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+        .question-box { text-align: left; margin-top: 20px; min-height: 350px; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 20px; }
+        
+        .option {
+            background: #fff;
+            border: 2px solid #f1f2f6;
+            padding: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        .option:before { content: ""; width: 12px; height: 12px; border: 2px solid #ccc; border-radius: 50%; margin-right: 15px; flex-shrink: 0; }
+        .option:hover { border-color: var(--primary); background: #f0f4ff; }
+        .option.selected { border-color: var(--primary); background: #eef2ff; color: var(--primary); font-weight: bold; }
+        .option.selected:before { border-color: var(--primary); background: var(--primary); }
+
+        .progress-container { margin-bottom: 25px; }
+        .progress-bar { height: 8px; background: #eee; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.4s cubic-bezier(0.1, 0.7, 1.0, 0.1); }
+        
+        #final-score-val { font-size: 5rem; color: var(--primary); font-family: 'Chakra Petch'; margin: 0; }
+        .user-tag { color: var(--primary); font-weight: bold; }
+        .result-actions { display: flex; flex-direction: column; gap: 12px; margin-top: 30px; }
+
+        .badge-chapter { background: #f1f2f6; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div id="start-screen" class="screen active">
+        <div style="font-size: 4rem; color: var(--primary); margin-bottom: 10px;"><i class="bi bi-css3"></i></div>
+        <h1>CSS3 MASTERY QUIZ</h1>
+        <p class="subtitle">วัดระดับทักษะการตกแต่งเว็บไซต์ (30 ข้อ)</p>
+        <hr>
+        <div style="text-align: left; background: #f8f9fa; padding: 20px; border-radius: 15px; margin-bottom: 25px;">
+            <p style="margin: 0; font-size: 0.9rem;"><b>หัวข้อที่ใช้ทดสอบ:</b></p>
+            <p style="font-size: 0.8rem; color: var(--gray); margin-top: 5px;">Selectors, Box Model, Flexbox, Grid, Responsive, Animation, Variables & More</p>
+        </div>
+        <div style="margin: 20px 0;">
+            <label style="font-weight: bold;">ชื่อ-นามสกุล ผู้เข้าสอบ:</label><br>
+            <input type="text" id="username" placeholder="กรอกชื่อของคุณ..." autocomplete="off">
+        </div>
+        <button class="btn btn-start" onclick="startQuiz()">เริ่มทำข้อสอบ <i class="bi bi-play-fill"></i></button>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <div class="progress-container">
+            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 8px;">
+                <span id="chapter-label" class="badge-chapter">Chapter 1</span>
+                <span>Progress: <b id="progress-text">0%</b></span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="text-align: left;">
+                <div style="font-size: 0.8rem; color: var(--gray);">CANDIDATE</div>
+                <div class="user-tag" id="display-name" style="font-size: 1.1rem;"></div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.8rem; color: var(--gray);">QUESTION</div>
+                <div style="font-weight: bold; font-size: 1.1rem;"><span id="current-idx">1</span> / 30</div>
+            </div>
+        </div>
+        
+        <div class="question-box">
+            <h3 id="question-text" style="line-height: 1.4; color: var(--dark);">คำถาม...</h3>
+            <div id="options-list" class="options-grid"></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-prev" id="prev-btn" onclick="prevQuestion()"><i class="bi bi-arrow-left"></i> ย้อนกลับ</button>
+            <button class="btn btn-next" id="next-btn" onclick="nextQuestion()">ข้อถัดไป <i class="bi bi-arrow-right"></i></button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <div id="result-icon" style="font-size: 5rem; margin-bottom: 10px;"></div>
+        <h1>RESULT SUMMARY</h1>
+        <hr>
+        <p>คุณ <span id="result-user" class="user-tag"></span> ทำคะแนนได้:</p>
+        <div id="final-score-val">0 / 30</div>
+        <p id="result-msg" style="font-size: 1.2rem; margin-top: 10px;"></p>
+        
+        <div class="result-actions">
+            <button class="btn btn-start" onclick="resetQuiz()"><i class="bi bi-arrow-counterclockwise"></i> ทำข้อสอบอีกครั้ง</button>
+            <button class="btn btn-lesson" onclick="goToLesson()"><i class="bi bi-book"></i> กลับสู่บทเรียน</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        // 1. Selectors & Syntax
+        { cap: "Selectors", q: "1. สัญลักษณ์ใดใช้สำหรับเลือกองค์ประกอบผ่าน Class ใน CSS?", a: ["# (Hash)", ". (Dot)", "* (Asterisk)", "@ (At)"], c: 1 },
+        { cap: "Selectors", q: "2. การเลือก h1 ทุกตัวที่อยู่ภายใต้ div (Descendant Selector) เขียนอย่างไร?", a: ["div > h1", "div + h1", "div h1", "div.h1"], c: 2 },
+        { cap: "Selectors", q: "3. Pseudo-class ใดใช้จัดการสไตล์เมื่อเมาส์ชี้ไปที่วัตถุ?", a: [":active", ":focus", ":hover", ":visited"], c: 2 },
+        // 2. Colors & Backgrounds
+        { cap: "Colors", q: "4. ค่าสี RGB ข้อใดคือสีขาว (White)?", a: ["rgb(0,0,0)", "rgb(255,255,255)", "rgb(128,128,128)", "rgb(255,0,0)"], c: 1 },
+        { cap: "Backgrounds", q: "5. หากต้องการให้รูปพื้นหลังไม่เลื่อนตามเนื้อหา (Fixed) ต้องใช้ Property ใด?", a: ["background-repeat", "background-position", "background-attachment", "background-size"], c: 2 },
+        { cap: "Colors", q: "6. ตัวเลข '0.5' ในค่า rgba(0, 0, 0, 0.5) หมายถึงอะไร?", a: ["ความสว่าง", "ความกว้าง", "ความโปร่งใส (Alpha)", "เฉดสี"], c: 2 },
+        // 3. The Box Model
+        { cap: "Box Model", q: "7. ส่วนประกอบใดของ Box Model ที่อยู่ระหว่าง Border และ Content?", a: ["Margin", "Padding", "Outline", "Gap"], c: 1 },
+        { cap: "Box Model", q: "8. Property ใดทำให้ขนาด Box คงที่แม้จะเพิ่ม Padding หรือ Border เข้าไป?", a: ["box-sizing: content-box", "box-sizing: border-box", "display: block", "overflow: hidden"], c: 1 },
+        { cap: "Box Model", q: "9. หากตั้งค่า margin: 10px 20px; ค่า 20px จะมีผลกับด้านใด?", a: ["บนและล่าง", "ล่างอย่างเดียว", "ซ้ายและขวา", "ขวาอย่างเดียว"], c: 2 },
+        // 4. Typography & Fonts
+        { cap: "Typography", q: "10. Property ใดใช้เปลี่ยนรูปแบบตัวอักษร?", a: ["font-style", "font-weight", "font-family", "text-transform"], c: 2 },
+        { cap: "Typography", q: "11. ค่าขนาดฟอนต์ 1em มีค่าเท่ากับกี่พิกเซล (โดยปกติพื้นฐาน)?", a: ["10px", "14px", "16px", "24px"], c: 2 },
+        { cap: "Typography", q: "12. Property 'text-align: justify' หมายถึงการจัดข้อความแบบใด?", a: ["ชิดซ้าย", "ชิดขวา", "จัดกึ่งกลาง", "กระจายข้อความให้เต็มบรรทัด"], c: 3 },
+        // 5. Flexbox Layout
+        { cap: "Flexbox", q: "13. Property ใดใช้จัดวาง Item ตามแนวแกนหลัก (Main Axis)?", a: ["align-items", "justify-content", "flex-direction", "align-content"], c: 1 },
+        { cap: "Flexbox", q: "14. หากต้องการให้ Flex Items เรียงตัวในแนวตั้ง ต้องกำหนดค่าอย่างไร?", a: ["flex-direction: row", "flex-direction: column", "display: grid", "flex-wrap: wrap"], c: 1 },
+        { cap: "Flexbox", q: "15. Property ใดใช้กำหนดลำดับการแสดงผลของ Flex Item โดยไม่แก้ HTML?", a: ["index", "z-index", "order", "flex-grow"], c: 2 },
+        // 6. CSS Grid System
+        { cap: "Grid", q: "16. การสร้างคอลัมน์ขนาดเท่ากัน 3 ช่องใน Grid ใช้ฟังก์ชันใดได้ดีที่สุด?", a: ["grid-template-columns: 1fr 1fr 1fr;", "grid-template-columns: repeat(3, 1fr);", "grid-template-columns: 33% 33% 33%;", "ถูกทั้งข้อ 1 และ 2"], c: 3 },
+        { cap: "Grid", q: "17. Property ใดใช้กำหนดระยะห่างระหว่างช่องใน Grid?", a: ["margin", "padding", "gap", "spacing"], c: 2 },
+        { cap: "Grid", q: "18. ใน Grid, 'fr' ย่อมาจากอะไร?", a: ["Frame", "Fraction", "Front", "Free"], c: 1 },
+        // 7. Responsive Design
+        { cap: "Responsive", q: "19. คำสั่งใดที่ใช้ในการกำหนดเงื่อนไขขนาดหน้าจอ (Breakpoints)?", a: ["@media", "@import", "@responsive", "@screen"], c: 0 },
+        { cap: "Responsive", q: "20. viewport meta tag ใน HTML มีหน้าที่อะไร?", a: ["เปลี่ยนสีหน้าจอ", "ควบคุมการซูมและขนาดบนมือถือ", "ส่งข้อมูลเว็บ", "เพิ่มความเร็วโหลด"], c: 1 },
+        { cap: "Responsive", q: "21. หน่วยใดที่เหมาะสมที่สุดสำหรับการทำเว็บ Responsive แบบ Flexible?", a: ["px", "pt", "% หรือ vh/vw", "cm"], c: 2 },
+        // 8. Transitions & Animations
+        { cap: "Animations", q: "22. Property ใดใช้เชื่อมโยง @keyframes เข้ากับ Element?", a: ["animation-name", "transition-name", "transform", "keyframe-link"], c: 0 },
+        { cap: "Transitions", q: "23. Transition ต่างจาก Animation อย่างไร?", a: ["Animation ต้องมีจุดเริ่มและจบชัดเจน", "Transition ทำงานเมื่อมีการเปลี่ยนสถานะ", "Transition ใส่ได้แค่สี", "ไม่มีความต่าง"], c: 1 },
+        { cap: "Animations", q: "24. Property ใดใช้ทำให้ Animation เล่นวนไปเรื่อยๆ ไม่จบ?", a: ["animation-loop: true", "animation-iteration-count: infinite", "animation-play-state: running", "animation-direction: reverse"], c: 1 },
+        // 9. CSS Variables & Best Practice
+        { cap: "Variables", q: "25. การประกาศตัวแปร CSS ต้องเริ่มต้นด้วยสัญลักษณ์ใด?", a: ["$var-name", "--var-name", "@var-name", "var-name"], c: 1 },
+        { cap: "Variables", q: "26. ฟังก์ชันใดใช้เรียกค่าจากตัวแปรมาใช้งาน?", a: ["get()", "call()", "var()", "use()"], c: 2 },
+        { cap: "Best Practice", q: "27. การเขียน CSS แบบ BEM (.block__element--modifier) มีข้อดีอย่างไร?", a: ["ทำให้โค้ดรันเร็วขึ้น", "ช่วยให้อ่านง่ายและจัดการโครงสร้างคลาสได้ดี", "ลดขนาดไฟล์ CSS", "ใช้กับ IE ได้ดีกว่า"], c: 1 },
+        { cap: "Best Practice", q: "28. 'DRY Principle' ในการเขียน CSS หมายถึงอะไร?", a: ["Don't Run Yesterday", "Don't Repeat Yourself", "Do Repeat Yourself", "Design Real Yield"], c: 1 },
+        { cap: "Best Practice", q: "29. Property 'box-sizing: border-box' นิยมใส่ไว้ที่ไหนเพื่อให้มีผลทั่วเว็บ?", a: ["body", "html", "* (Universal Selector)", ".container"], c: 2 },
+        { cap: "Best Practice", q: "30. ประโยชน์ของการใช้ CSS Variables ในโปรเจกต์ขนาดใหญ่คืออะไร?", a: ["ทำให้เบราว์เซอร์ไม่ต้องโหลดสี", "ช่วยให้เปลี่ยนธีมสี (Theming) ได้จากที่เดียว", "ป้องกันแฮกเกอร์", "ช่วยให้รูปภาพชัดขึ้น"], c: 1 }
+    ];
+
+    let currentQuestion = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+    let userName = "";
+
+    function startQuiz() {
+        userName = document.getElementById('username').value.trim();
+        if(!userName) return alert("กรุณากรอกชื่อของคุณก่อนเริ่มสอบ");
+        
+        document.getElementById('display-name').innerText = userName;
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const data = quizData[currentQuestion];
+        document.getElementById('question-text').innerText = data.q;
+        document.getElementById('current-idx').innerText = currentQuestion + 1;
+        document.getElementById('chapter-label').innerText = data.cap;
+        
+        const list = document.getElementById('options-list');
+        list.innerHTML = "";
+        
+        data.a.forEach((txt, i) => {
+            const div = document.createElement('div');
+            div.className = `option ${userAnswers[currentQuestion] === i ? 'selected' : ''}`;
+            div.innerText = txt;
+            div.onclick = () => selectOption(i);
+            list.appendChild(div);
+        });
+
+        document.getElementById('prev-btn').disabled = currentQuestion === 0;
+        document.getElementById('next-btn').innerHTML = currentQuestion === quizData.length - 1 ? 'ส่งข้อสอบ <i class="bi bi-send-fill"></i>' : 'ข้อถัดไป <i class="bi bi-arrow-right"></i>';
+        
+        const progress = ((currentQuestion) / quizData.length) * 100;
+        document.getElementById('progress-fill').style.width = progress + "%";
+        document.getElementById('progress-text').innerText = Math.round(progress) + "%";
+    }
+
+    function selectOption(index) {
+        userAnswers[currentQuestion] = index;
+        renderQuestion();
+    }
+
+    function nextQuestion() {
+        if(userAnswers[currentQuestion] === null) return alert("กรุณาเลือกคำตอบก่อนไปต่อ");
+        
+        if(currentQuestion < quizData.length - 1) {
+            currentQuestion++;
+            renderQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function prevQuestion() {
+        if(currentQuestion > 0) {
+            currentQuestion--;
+            renderQuestion();
+        }
+    }
+
+    function showResult() {
+        let score = 0;
+        quizData.forEach((item, i) => {
+            if(userAnswers[i] === item.c) score++;
+        });
+
+        document.getElementById('quiz-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        document.getElementById('result-user').innerText = userName;
+        document.getElementById('final-score-val').innerText = `${score} / ${quizData.length}`;
+        
+        let msg = "";
+        let icon = "";
+        if(score === 30) {
+            msg = "ระดับ: CSS Grandmaster! คุณคือสุดยอดเทพเจ้าสไตล์!";
+            icon = "🏆";
+        } else if(score >= 24) {
+            msg = "ระดับ: Professional! คุณมีความเข้าใจใน CSS ดีเยี่ยม";
+            icon = "🌟";
+        } else if(score >= 15) {
+            msg = "ระดับ: Intermediate! คุณผ่านเกณฑ์ แต่ยังทบทวนบางบทได้";
+            icon = "👍";
+        } else {
+            msg = "ระดับ: Beginner! พยายามอีกนิด ทบทวนบทเรียนและลองใหม่นะ";
+            icon = "📚";
+        }
+        
+        document.getElementById('result-msg').innerText = msg;
+        document.getElementById('result-icon').innerText = icon;
+    }
+
+    function resetQuiz() {
+        userAnswers = new Array(quizData.length).fill(null);
+        currentQuestion = 0;
+        document.getElementById('result-screen').classList.remove('active');
+        document.getElementById('start-screen').classList.add('active');
+    }
+
+    function goToLesson() {
+        // เปลี่ยนเป็น URL ของบทเรียนคุณ
+        window.location.href = "course_css.html";
+    }
+</script>
+</body>
+</html>

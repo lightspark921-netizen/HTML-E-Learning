@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บทเรียนที่ 1 - HTML5 Complete Notebook</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --paper: #fdfcf0;
+            --ink: #2b2d42;
+            --html-orange: #e44d26;
+            --dark-orange: #c0392b;
+            --desk: #d1d5db;
+            --preview-bg: #ffffff;
+        }
+
+        body { 
+            background: var(--desk); 
+            font-family: 'Sarabun', sans-serif;
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0; perspective: 2000px; overflow: hidden;
+        }
+
+        .book-wrapper {
+            position: relative;
+            width: 500px; height: 800px;
+            transform-style: preserve-3d;
+            transition: width 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+        }
+
+        .book-wrapper.is-open { width: 1200px; }
+
+        .book-cover {
+            position: absolute; width: 500px; height: 100%;
+            background: var(--html-orange); left: 0; top: 0; z-index: 100;
+            transform-origin: left; transition: transform 1s cubic-bezier(0.645, 0.045, 0.355, 1);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; border-radius: 5px 20px 20px 5px;
+            border-left: 15px solid var(--dark-orange); box-shadow: 15px 0 50px rgba(0,0,0,0.3);
+            cursor: pointer; backface-visibility: hidden;
+        }
+
+        .book-cover.opened { transform: rotateY(-175deg); }
+
+        .notebook {
+            position: absolute; width: 1200px; height: 100%;
+            background: var(--paper); border-radius: 5px 20px 20px 5px;
+            display: flex; left: 0; top: 0; z-index: 1; opacity: 0;
+            transition: opacity 0.4s ease; box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+        }
+
+        .book-wrapper.is-open .notebook { opacity: 1; }
+        .notebook::after { content: ""; position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: rgba(0,0,0,0.08); z-index: 5; }
+
+        .page-left, .page-right { 
+            flex: 1; padding: 40px 60px; 
+            overflow-y: auto; 
+            scrollbar-width: thin;
+        }
+
+        h2 { font-family: 'Chakra Petch', sans-serif; color: var(--html-orange); border-bottom: 2px solid #ddd; padding-bottom: 10px; margin-bottom: 15px; font-weight: 700; font-size: 1.6rem; }
+        h4 { font-family: 'Chakra Petch', sans-serif; color: var(--ink); margin-top: 20px; font-weight: 700; border-left: 4px solid var(--html-orange); padding-left: 10px; font-size: 1.1rem; }
+        p { line-height: 1.6; font-size: 0.95rem; color: #333; margin-bottom: 1rem; }
+
+        /* Code & Preview Styling */
+        .code-block { 
+            background: #282c34; color: #abb2bf; padding: 15px; 
+            border-radius: 10px 10px 0 0; font-family: 'Consolas', monospace; 
+            font-size: 0.8rem; margin-top: 15px; border-left: 5px solid var(--html-orange);
+            line-height: 1.4; position: relative;
+        }
+        .preview-label { background: #e9ecef; color: #495057; font-size: 0.75rem; padding: 4px 12px; font-weight: bold; border-left: 5px solid #adb5bd; }
+        .code-preview { background: var(--preview-bg); border: 1px solid #ddd; padding: 15px; border-radius: 0 0 10px 10px; margin-bottom: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+
+        .tag { color: #e06c75; } .attr { color: #d19a66; } .val { color: #98c379; }
+
+        .tip-box { background: #eef2ff; border-radius: 8px; padding: 12px; border-left: 5px solid #4f46e5; margin: 15px 0; font-size: 0.85rem; }
+        .tag-badge { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-weight: bold; color: var(--html-orange); font-size: 0.85rem; }
+
+        /* Playground Editor */
+        #editor { width: 100%; height: 200px; font-family: monospace; padding: 10px; border-radius: 8px; border: 1px solid #ccc; background: #fff; margin-bottom: 10px; }
+        #live-preview { width: 100%; height: 250px; background: white; border: 2px dashed #bbb; border-radius: 8px; padding: 10px; overflow: auto; }
+
+        .notebook-footer {
+            position: absolute; bottom: 0; left: 0; right: 0; height: 70px;
+            background: #fff; display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; border-top: 1px solid #eee; border-radius: 0 0 20px 5px; z-index: 10;
+        }
+
+        .btn-nav { background: var(--ink); color: white; border: none; padding: 8px 20px; border-radius: 50px; font-weight: bold; transition: 0.3s; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        .btn-nav:hover:not(:disabled) { background: var(--html-orange); transform: translateY(-2px); color: white; }
+        .btn-menu { background: #f8f9fa; color: var(--ink); border: 1px solid #ddd; }
+        .btn-nav:disabled { background: #ccc; opacity: 0.5; cursor: not-allowed; }
+        .btn-next-chapter { background: #27ae60; }
+    </style>
+</head>
+<body>
+
+<div class="book-wrapper" id="wrapper">
+    <div class="book-cover" id="bookCover" onclick="openBook()">
+         <div style="width:130px; height:130px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+            <i class="bi bi-file-earmark-text-fill" style="font-size:4.5rem; color:var(--html-orange)"></i>
+        </div>
+        <h1 class="display-4 fw-bold" style="font-family: 'Chakra Petch';">HTML5</h1>
+        <p class="lead">THE COMPLETE HANDBOOK</p>
+        <div style="width: 70px; height: 4px; background: white; margin: 20px 0; border-radius: 2px;"></div>
+        <h5 class="fw-bold">UNIT 01: ESSENTIALS</h5>
+        <p class="small opacity-75">พื้นฐานการสร้างโครงสร้างเว็บอย่างมืออาชีพ</p>
+        <div class="mt-4 small opacity-75 animate-bounce"><i class="bi bi-hand-index-thumb"></i> คลิกเพื่อเปิดสมุดบันทึก</div>
+    </div>
+
+    <div class="notebook">
+        <div class="page-left" id="left-page"></div>
+        <div class="page-right" id="right-page"></div>
+        
+        <div class="notebook-footer">
+            <div class="d-flex gap-2">
+                <button class="btn-nav btn-menu" onclick="window.location.href='lesson-html.html'">
+                    <i class="bi bi-grid-fill"></i> เลือกบทเรียน
+                </button>
+                <button class="btn-nav" id="prevBtn" onclick="changePage(-1)">
+                    <i class="bi bi-chevron-left"></i> ย้อนกลับ
+                </button>
+            </div>
+            
+            <div class="fw-bold text-muted small">หน้า <span id="pageNum">1</span> / <span id="totalPage"></span></div>
+            
+            <button class="btn-nav" id="nextBtn" onclick="changePage(1)">
+                <span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const content = [
+        {
+            left: `
+                <h2>1. จุดเริ่มต้นของ HTML</h2>
+                <p><b>HTML (HyperText Markup Language)</b> ไม่ใช่ภาษาโปรแกรม (Programming Language) แต่เป็นภาษาที่ใช้สำหรับ <b>"จัดโครงสร้าง"</b> ของเนื้อหาบนเว็บไซต์</p>
+                <h4>ทำไมต้องเรียน HTML?</h4>
+                <p>ทุกเว็บไซต์ในโลก ไม่ว่าจะเป็น Facebook, Google หรือเว็บที่คุณใช้อยู่ตอนนี้ ทั้งหมดล้วนมีรากฐานมาจาก HTML ทั้งสิ้น หากเปรียบเทียบกับบ้าน:</p>
+                <ul>
+                    <li><b>HTML:</b> คือโครงสร้างอิฐ ปูน เสาเข็ม</li>
+                    <li><b>CSS:</b> คือการทาสี ตกแต่งเฟอร์นิเจอร์</li>
+                    <li><b>JavaScript:</b> คือระบบไฟ ประตูอัตโนมัติ</li>
+                </ul>
+                <div class="tip-box">
+                    <i class="bi bi-info-circle"></i> ปัจจุบันเราใช้ <b>HTML5</b> ซึ่งเป็นมาตรฐานล่าสุดที่รองรับทั้ง Video, Audio และการทำงานที่ซับซ้อนโดยไม่ต้องใช้ปลั๊กอิน
+                </div>
+            `,
+            right: `
+                <h2>2. โครงสร้างที่ถูกต้อง</h2>
+                <p>เบราว์เซอร์จะอ่านไฟล์ HTML จากบนลงล่าง โดยมีโครงสร้างบังคับดังนี้:</p>
+                <div class="code-block">
+                    <span class="tag">&lt;!DOCTYPE html&gt;</span> <span class="text-muted">// บอกว่านี่คือ HTML5</span><br>
+                    <span class="tag">&lt;html&gt;</span> <span class="text-muted">// จุดเริ่มต้นไฟล์</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;head&gt;</span> <span class="text-muted">// เก็บข้อมูลเบื้องหลัง</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;<span class="tag">&lt;title&gt;</span>ชื่อเว็บ<span class="tag">&lt;/title&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;/head&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;body&gt;</span> <span class="text-muted">// ส่วนที่แสดงผลบนจอ</span><br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;เนื้อหาทั้งหมด...<br>
+                    &nbsp;&nbsp;<span class="tag">&lt;/body&gt;</span><br>
+                    <span class="tag">&lt;/html&gt;</span>
+                </div>
+                <h4>Element คืออะไร?</h4>
+                <p>ประกอบด้วย <b>Tag เปิด</b> + <b>เนื้อหา</b> + <b>Tag ปิด</b> เช่น:</p>
+                <div class="code-preview">
+                    <span class="tag-badge">&lt;p&gt;</span> สวัสดีชาวโลก <span class="tag-badge">&lt;/p&gt;</span>
+                </div>
+            `
+        },
+        {
+            left: `
+                <h2>3. การจัดการหัวข้อ & ย่อหน้า</h2>
+                <p>ความสวยงามของเว็บเริ่มจากการจัดลำดับความสำคัญของข้อความ (Hierarchy)</p>
+                <h4>Heading (h1 - h6)</h4>
+                <p>ใช้สำหรับหัวข้อข่าวหรือหัวเรื่อง h1 ใหญ่สุด และ h6 เล็กสุด</p>
+                <div class="code-block">
+                    <span class="tag">&lt;h1&gt;</span>หัวข้อหลักของหน้า<span class="tag">&lt;/h1&gt;</span><br>
+                    <span class="tag">&lt;h2&gt;</span>หัวข้อรองลงมา<span class="tag">&lt;/h2&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    <h1 style="margin:0; font-size: 1.5rem; border:0;">หัวข้อหลักของหน้า</h1>
+                    <h2 style="margin:0; font-size: 1.2rem; border:0; color:#666;">หัวข้อรองลงมา</h2>
+                </div>
+            `,
+            right: `
+                <h4>Paragraph (p)</h4>
+                <p>ใช้สำหรับเนื้อหาทั่วไป เบราว์เซอร์จะเว้นระยะบรรทัดให้อัตโนมัติเมื่อขึ้นย่อหน้าใหม่</p>
+                <h4>Text Formatting</h4>
+                <p>การเน้นคำที่สำคัญ:</p>
+                <ul>
+                    <li><span class="tag-badge">&lt;strong&gt;</span> : <strong>ตัวหนา</strong> (เน้นความสำคัญ)</li>
+                    <li><span class="tag-badge">&lt;em&gt;</span> : <em>ตัวเอียง</em> (เน้นเสียงหรือคำอ่าน)</li>
+                    <li><span class="tag-badge">&lt;mark&gt;</span> : <mark>ไฮไลท์ข้อความ</mark></li>
+                </ul>
+                <div class="code-block">
+                    ฉันกำลังเรียน <span class="tag">&lt;strong&gt;</span>HTML<span class="tag">&lt;/strong&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    ฉันกำลังเรียน <strong>HTML</strong>
+                </div>
+            `
+        },
+        {
+            left: `
+                <h2>4. รูปภาพและสื่อมัลติมีเดีย</h2>
+                <p>การทำให้เว็บไซต์ดูน่าสนใจต้องมีการใส่ภาพ</p>
+                <h4>Image Tag (img)</h4>
+                <p>เป็นแท็กแบบ <b>Self-closing</b> (ไม่มีแท็กปิด) ต้องมี Attribute สำคัญคือ:</p>
+                <ul>
+                    <li><b>src:</b> ที่อยู่ของไฟล์ภาพ</li>
+                    <li><b>alt:</b> ข้อความอธิบายภาพ (กรณีภาพไม่ขึ้น)</li>
+                </ul>
+                <div class="code-block">
+                    <span class="tag">&lt;img <span class="attr">src=</span><span class="val">"logo.png"</span> <span class="attr">alt=</span><span class="val">"โลโก้"</span> <span class="attr">width=</span><span class="val">"100"</span>&gt;</span>
+                </div>
+                <div class="tip-box">
+                    <i class="bi bi-exclamation-triangle"></i> อย่าลืมใส่ <b>alt</b> ทุกครั้งเพื่อความเท่าเทียมสำหรับผู้พิการที่ใช้เครื่องอ่านหน้าจอ (Screen Reader)
+                </div>
+            `,
+            right: `
+                <h2>5. การสร้างลิงก์ (Anchor)</h2>
+                <p>อินเทอร์เน็ตคือการเชื่อมต่อ ลิงก์จึงเป็นสิ่งสำคัญที่สุด</p>
+                <h4>Anchor Tag (a)</h4>
+                <p>ใช้ Attribute <b>href</b> เพื่อระบุปลายทาง:</p>
+                <div class="code-block">
+                    <span class="tag">&lt;a <span class="attr">href=</span><span class="val">"https://google.com"</span> <span class="attr">target=</span><span class="val">"_blank"</span>&gt;</span>ไปที่กูเกิล<span class="tag">&lt;/a&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    <a href="#" style="color:blue; text-decoration:underline;">ไปที่กูเกิล</a>
+                </div>
+                <p>การใส่ <code>target="_blank"</code> จะทำให้ลิงก์เปิดในแท็บใหม่เสมอ</p>
+            `
+        },
+        {
+            left: `
+                <h2>6. ลิสต์และรายการ (Lists)</h2>
+                <p>ใช้สำหรับจัดกลุ่มข้อมูลที่สัมพันธ์กัน</p>
+                <h4>1. Unordered List (ul)</h4>
+                <p>รายการแบบไม่มีลำดับ (ใช้จุด Bullet)</p>
+                <div class="code-block">
+                    <span class="tag">&lt;ul&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>แอปเปิ้ล<span class="tag">&lt;/li&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>ส้ม<span class="tag">&lt;/li&gt;</span><br>
+                    <span class="tag">&lt;/ul&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    <ul style="margin:0;"><li>แอปเปิ้ล</li><li>ส้ม</li></ul>
+                </div>
+            `,
+            right: `
+                <h4>2. Ordered List (ol)</h4>
+                <p>รายการแบบมีลำดับ (1, 2, 3...)</p>
+                <div class="code-block">
+                    <span class="tag">&lt;ol&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>ตื่นนอน<span class="tag">&lt;/li&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;li&gt;</span>อาบน้ำ<span class="tag">&lt;/li&gt;</span><br>
+                    <span class="tag">&lt;/ol&gt;</span>
+                </div>
+                <div class="preview-label">ผลลัพธ์:</div>
+                <div class="code-preview">
+                    <ol style="margin:0;"><li>ตื่นนอน</li><li>อาบน้ำ</li></ol>
+                </div>
+                <p>สามารถเปลี่ยนจากตัวเลขเป็นตัวอักษรได้โดยใช้ <code>type="A"</code></p>
+            `
+        },
+        {
+            left: `
+                <h2>7. Semantic HTML (ความหมาย)</h2>
+                <p>การใช้แท็กที่ตรงกับเนื้อหาช่วยให้คอมพิวเตอร์เข้าใจเว็บเราได้ดีขึ้น</p>
+                <div class="table-responsive">
+                    <table class="table table-sm small">
+                        <thead><tr><th>Tag</th><th>ความหมาย</th></tr></thead>
+                        <tbody>
+                            <tr><td><span class="tag-badge">&lt;header&gt;</span></td><td>ส่วนหัวของหน้าเว็บ</td></tr>
+                            <tr><td><span class="tag-badge">&lt;nav&gt;</span></td><td>ส่วนเมนูนำทาง</td></tr>
+                            <tr><td><span class="tag-badge">&lt;main&gt;</span></td><td>เนื้อหาหลัก</td></tr>
+                            <tr><td><span class="tag-badge">&lt;section&gt;</span></td><td>การแบ่งส่วนเนื้อหา</td></tr>
+                            <tr><td><span class="tag-badge">&lt;footer&gt;</span></td><td>ส่วนท้ายของหน้า</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `,
+            right: `
+                <h4>ตัวอย่างการวางโครงสร้าง:</h4>
+                <div class="code-block" style="font-size:0.7rem;">
+                    <span class="tag">&lt;header&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;h1&gt;</span>ชื่อบล็อก<span class="tag">&lt;/h1&gt;</span><br>
+                    <span class="tag">&lt;/header&gt;</span><br>
+                    <span class="tag">&lt;main&gt;</span><br>
+                    &nbsp;&nbsp;<span class="tag">&lt;article&gt;</span>เนื้อหาหลัก...<span class="tag">&lt;/article&gt;</span><br>
+                    <span class="tag">&lt;/main&gt;</span>
+                </div>
+                <div class="tip-box" style="background: #fff3cd; border-color: #ffc107;">
+                    การใช้ Semantic HTML สำคัญมากต่อ <b>SEO</b> ทำให้เว็บไซต์ติดอันดับการค้นหาได้ง่ายขึ้น
+                </div>
+            `
+        },
+        {
+            left: `
+                <h2>8. พื้นที่ทดลอง Code (Playground)</h2>
+                <p>ลองพิมพ์โค้ด HTML ที่คุณเรียนมาในช่องด้านล่าง แล้วดูผลลัพธ์ที่เกิดขึ้นจริง!</p>
+                <textarea id="editor" spellcheck="false" oninput="updatePreview()">
+<h1>ลองพิมพ์ที่นี่!</h1>
+<p>สวัสดี <strong>HTML5</strong></p>
+<button onclick="alert('สวัสดี!')">คลิกฉันสิ</button></textarea>
+                <div class="small text-muted mb-2"><i class="bi bi-pencil"></i> แก้ไขโค้ดในช่องสีขาวได้เลย</div>
+            `,
+            right: `
+                <h4>ผลลัพธ์สด (Live Preview):</h4>
+                <div id="live-preview"></div>
+                <div class="text-center mt-4">
+                     <p class="small text-muted">พร้อมที่จะเรียนรู้เรื่องต่อไปหรือยัง?</p>
+                </div>
+            `
+        }
+    ];
+
+    let currentPage = 0;
+    let isOpen = false;
+
+    // คำนวณหน้าทั้งหมด
+    document.getElementById('totalPage').innerText = content.length;
+
+    function openBook() {
+        if (isOpen) return;
+        isOpen = true;
+        document.getElementById('wrapper').classList.add('is-open');
+        document.getElementById('bookCover').classList.add('opened');
+        setTimeout(renderPage, 300);
+    }
+
+    function renderPage() {
+        const set = content[currentPage];
+        const left = document.getElementById('left-page');
+        const right = document.getElementById('right-page');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        left.style.opacity = 0;
+        right.style.opacity = 0;
+        
+        setTimeout(() => {
+            left.innerHTML = set.left;
+            right.innerHTML = set.right;
+            left.style.opacity = 1;
+            right.style.opacity = 1;
+            
+            document.getElementById('pageNum').innerText = currentPage + 1;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+
+            // ตรวจสอบหน้าสุดท้าย
+            if (currentPage === content.length - 1) {
+                nextBtn.innerHTML = '<span>ไปบทถัดไป (Lists)</span> <i class="bi bi-arrow-right-short"></i>';
+                nextBtn.classList.add('btn-next-chapter');
+                nextBtn.onclick = () => window.location.href = 'lesson2.html';
+                // รันฟังก์ชันพรีวิวทันทีที่เปิดหน้า 8
+                updatePreview();
+            } else {
+                nextBtn.innerHTML = '<span>หน้าถัดไป</span> <i class="bi bi-chevron-right"></i>';
+                nextBtn.classList.remove('btn-next-chapter');
+                nextBtn.onclick = () => changePage(1);
+            }
+        }, 150);
+    }
+
+    function changePage(step) {
+        if (currentPage + step >= 0 && currentPage + step < content.length) {
+            currentPage += step;
+            renderPage();
+        }
+    }
+
+    // ฟังก์ชันสำหรับ Playground
+    function updatePreview() {
+        const code = document.getElementById('editor').value;
+        const preview = document.getElementById('live-preview');
+        if(preview) {
+            preview.innerHTML = code;
+        }
+    }
+</script>
+</body>
+</html>

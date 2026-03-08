@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHP Mastery Quiz - Unit 09 File Handling</title>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&family=Chakra+Petch:wght@700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f5b93; /* PHP Purple */
+            --primary-dark: #384161;
+            --accent: #8892be;
+            --success: #27ae60;
+            --bg: #f0f2f5;
+            --white: #ffffff;
+            --gray: #95a5a6;
+        }
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .quiz-card {
+            background: var(--white);
+            width: 95%;
+            max-width: 800px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 8px solid var(--primary);
+        }
+
+        h1 { font-family: 'Chakra Petch', sans-serif; color: var(--primary); margin-bottom: 10px; }
+        hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
+        
+        .screen { display: none; }
+        .screen.active { display: block; }
+
+        input[type="text"] {
+            width: 80%;
+            padding: 12px;
+            margin: 20px 0;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            outline: none;
+            text-align: center;
+        }
+
+        .btn-group { display: flex; justify-content: space-between; margin-top: 25px; gap: 10px; }
+
+        .btn {
+            flex: 1;
+            padding: 12px 25px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-next { background: var(--primary); color: white; }
+        .btn-next:hover { background: var(--primary-dark); }
+        .btn-prev { background: var(--gray); color: white; }
+        .btn-start { background: var(--primary); color: white; width: 100%; font-size: 1.2rem; }
+        .btn-lesson { background: #34495e; color: white; }
+        
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .question-box { text-align: left; margin-top: 20px; min-height: 320px; }
+        .options-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 15px; }
+        
+        .option {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .option:hover { border-color: var(--primary); background: #f0f2f8; }
+        .option.selected { border-color: var(--primary); background: var(--primary); color: white; }
+
+        .progress-bar {
+            height: 10px; background: #ddd; border-radius: 5px; margin-bottom: 20px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: var(--primary); width: 0%; transition: 0.3s;
+        }
+        
+        #final-score-val { font-size: 4rem; color: var(--primary); font-weight: bold; margin: 10px 0; }
+        .user-tag { color: var(--primary); font-weight: bold; }
+        .result-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        
+        code { background: #eee; padding: 2px 5px; border-radius: 4px; font-family: monospace; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div id="start-screen" class="screen active">
+        <div style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"><i class="bi bi-file-earmark-code"></i></div>
+        <h1>PHP UNIT 09 QUIZ</h1>
+        <p>File Handling & Upload Mastery (30 Questions)</p>
+        <hr>
+        <div style="margin: 30px 0;">
+            <label>ชื่อผู้เข้ารับการทดสอบ:</label><br>
+            <input type="text" id="username" placeholder="กรุณาใส่ชื่อของคุณ..." autocomplete="off">
+        </div>
+        <button class="btn btn-start" onclick="startQuiz()">เริ่มทำข้อสอบ</button>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: #7f8c8d; margin-bottom: 10px;">
+            <span>Candidate: <span class="user-tag" id="display-name"></span></span>
+            <span>Question <span id="current-idx">1</span> / 30</span>
+        </div>
+        
+        <div class="question-box">
+            <h3 id="question-text" style="line-height: 1.5;">คำถาม...</h3>
+            <div id="options-list" class="options-grid"></div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-prev" id="prev-btn" onclick="prevQuestion()">ย้อนกลับ</button>
+            <button class="btn btn-next" id="next-btn" onclick="nextQuestion()">ข้อถัดไป</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <h1>RESULT SUMMARY</h1>
+        <hr>
+        <p>ยินดีด้วยคุณ <span id="result-user" class="user-tag"></span></p>
+        <p>คะแนนความเชี่ยวชาญ PHP ของคุณ:</p>
+        <div id="final-score-val">0 / 30</div>
+        <p id="result-msg" style="font-weight: bold;"></p>
+        
+        <div class="result-actions">
+            <button class="btn btn-start" onclick="resetQuiz()">ทำข้อสอบอีกครั้ง</button>
+            <button class="btn btn-lesson" onclick="goToLesson()">กลับไปทบทวนบทเรียน</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const quizData = [
+        // 1-5: File Opening & Basics
+        { q: "1. ฟังก์ชันใดใช้ในการเปิดไฟล์ในภาษา PHP?", a: ["file_open()", "fopen()", "open_file()", "fsopen()"], c: 1 },
+        { q: "2. Mode 'w' ใน fopen หมายถึงอะไร?", a: ["อ่านอย่างเดียว", "เขียนต่อท้าย", "เขียนทับ (ถ้ามีไฟล์อยู่แล้วจะลบของเดิม)", "สร้างไฟล์ใหม่อย่างเดียวห้ามเขียน"], c: 2 },
+        { q: "3. Mode ใดที่ใช้สำหรับ 'อ่านและเขียน' โดยเริ่มที่ต้นไฟล์?", a: ["r+", "w+", "a+", "x+"], c: 0 },
+        { q: "4. เมื่อจัดการไฟล์เสร็จแล้ว ควรใช้ฟังก์ชันใดปิดไฟล์?", a: ["file_close()", "close()", "fclose()", "endfile()"], c: 2 },
+        { q: "5. Mode 'a' (Append) จะวางตัวชี้ไฟล์ (File Pointer) ไว้ที่จุดใด?", a: ["ต้นไฟล์", "กลางไฟล์", "บรรทัดแรก", "ท้ายไฟล์"], c: 3 },
+        
+        // 6-10: Reading/Writing Functions
+        { q: "6. ฟังก์ชันใดใช้สำหรับอ่านข้อมูลทั้งหมดจากไฟล์มาเป็น String ในบรรทัดเดียว?", a: ["fread()", "file_get_contents()", "fgets()", "read_all()"], c: 1 },
+        { q: "7. file_put_contents('test.txt', 'data') มีค่าเท่ากับการใช้ fopen โหมดใด?", a: ["โหมด 'r'", "โหมด 'w'", "โหมด 'x'", "โหมด 'a'"], c: 1 },
+        { q: "8. ฟังก์ชัน fgets() ใช้สำหรับอ่านไฟล์ในลักษณะใด?", a: ["อ่านทีละตัวอักษร", "อ่านทีละบรรทัด", "อ่านทั้งไฟล์", "อ่านเฉพาะตัวเลข"], c: 1 },
+        { q: "9. หากต้องการเขียนข้อมูลต่อท้ายไฟล์เดิมโดยใช้ file_put_contents ต้องระบุ flag ใด?", a: ["FILE_APPEND", "FILE_ADD", "APPEND_ONLY", "MODE_A"], c: 0 },
+        { q: "10. ฟังก์ชัน filesize() คืนค่าขนาดไฟล์เป็นหน่วยอะไร?", a: ["Bit", "Byte", "Kilobyte", "Megabyte"], c: 1 },
+
+        // 11-15: System Checks
+        { q: "11. ฟังก์ชันใดใช้ตรวจสอบว่าไฟล์มีอยู่จริงหรือไม่?", a: ["is_file()", "check_file()", "file_exists()", "has_file()"], c: 2 },
+        { q: "12. คำสั่ง unlink($filename) ใช้สำหรับทำอะไร?", a: ["ตัดการเชื่อมต่อไฟล์", "ลบไฟล์", "เปลี่ยนชื่อไฟล์", "ย้ายไฟล์"], c: 1 },
+        { q: "13. หากต้องการตรวจสอบว่าไฟล์นั้นอนุญาตให้เขียนข้อมูลได้หรือไม่ ควรใช้ฟังก์ชันใด?", a: ["is_readable()", "is_writable()", "can_write()", "write_check()"], c: 1 },
+        { q: "14. ฟังก์ชัน copy('file1.txt', 'file2.txt') จะทำหน้าที่อะไร?", a: ["เปลี่ยนชื่อไฟล์", "ย้ายไฟล์", "คัดลอกไฟล์", "เปรียบเทียบไฟล์"], c: 2 },
+        { q: "15. ฟังก์ชัน rename() นอกจากเปลี่ยนชื่อแล้ว สามารถใช้ทำอะไรได้อีก?", a: ["ลบไฟล์", "ย้ายไฟล์ไปโฟลเดอร์อื่น", "คัดลอกไฟล์", "ล็อคไฟล์"], c: 1 },
+
+        // 16-20: File Upload (HTML)
+        { q: "16. HTML Form สำหรับอัปโหลดไฟล์ต้องใช้ Method ใด?", a: ["GET", "PUT", "POST", "UPDATE"], c: 2 },
+        { q: "17. Attribute ใด 'จำเป็นที่สุด' ใน Tag <form> เพื่อให้อัปโหลดไฟล์ได้?", a: ["id='upload'", "enctype='multipart/form-data'", "type='file'", "rel='upload'"], c: 1 },
+        { q: "18. Tag Input สำหรับเลือกไฟล์ต้องกำหนด type เป็นค่าใด?", a: ["type='text'", "type='upload'", "type='file'", "type='binary'"], c: 2 },
+        { q: "19. หากต้องการให้เลือกอัปโหลดได้หลายไฟล์พร้อมกัน ต้องใส่ Attribute ใด?", a: ["multiple", "multi", "many", "all"], c: 0 },
+        { q: "20. ข้อมูลไฟล์ที่ถูกส่งมาจากฟอร์มจะถูกเก็บไว้ในตัวแปร Superglobal ใด?", a: ["$_POST", "$_GET", "$_FILES", "$_UPLOAD"], c: 2 },
+
+        // 21-25: $_FILES Array
+        { q: "21. $_FILES['userfile']['tmp_name'] คืออะไร?", a: ["ชื่อไฟล์ต้นฉบับ", "ที่อยู่ชั่วคราวของไฟล์บน Server", "ประเภทไฟล์", "รหัสข้อผิดพลาด"], c: 1 },
+        { q: "22. $_FILES['userfile']['size'] มีหน่วยเป็นอะไร?", a: ["KB", "MB", "Bytes", "Bits"], c: 2 },
+        { q: "23. หากไฟล์อัปโหลดสำเร็จ $_FILES['userfile']['error'] จะมีค่าเป็นเท่าใด?", a: ["1", "0", "-1", "NULL"], c: 1 },
+        { q: "24. $_FILES['userfile']['type'] เก็บข้อมูลประเภทใด?", a: ["นามสกุลไฟล์ (.jpg)", "MIME Type (image/jpeg)", "ขนาดไฟล์", "ชื่อโฟลเดอร์"], c: 1 },
+        { q: "25. Error Code 1 ในการอัปโหลดหมายถึงอะไร?", a: ["ไฟล์ว่างเปล่า", "ไม่มีโฟลเดอร์รองรับ", "ขนาดไฟล์เกินค่า upload_max_filesize ใน php.ini", "อัปโหลดสำเร็จ"], c: 2 },
+
+        // 26-30: Upload Security & Process
+        { q: "26. ฟังก์ชันใดใช้ย้ายไฟล์จาก Temp ไปยังโฟลเดอร์ที่ต้องการ?", a: ["copy_file()", "move_file()", "move_uploaded_file()", "transfer_file()"], c: 2 },
+        { q: "27. เพื่อความปลอดภัย เราควรใช้ฟังก์ชันใดสกัดเอาเฉพาะชื่อไฟล์ออกมา?", a: ["basename()", "filename()", "get_name()", "strip_path()"], c: 0 },
+        { q: "28. การเช็คนามสกุลไฟล์เพื่อความปลอดภัย ควรใช้ฟังก์ชันใดแยกนามสกุลออกมา?", a: ["substr()", "pathinfo()", "explode()", "get_ext()"], c: 1 },
+        { q: "29. ทำไมเราถึงไม่ควรใช้ชื่อไฟล์เดิมที่ผู้ใช้อัปโหลดมา?", a: ["ชื่ออาจจะยาวเกินไป", "เพื่อป้องกันไฟล์ชื่อซ้ำและเรื่องความปลอดภัย", "PHP บังคับให้เปลี่ยน", "ทำให้เว็บโหลดช้า"], c: 1 },
+        { q: "30. ค่า upload_max_filesize ถูกกำหนดไว้ที่ไฟล์ใดของระบบ?", a: ["index.php", "config.inc", ".htaccess", "php.ini"], c: 3 }
+    ];
+
+    let currentQuestion = 0;
+    let userAnswers = new Array(quizData.length).fill(null);
+    let userName = "";
+
+    function startQuiz() {
+        userName = document.getElementById('username').value.trim();
+        if(!userName) return alert("กรุณากรอกชื่อของคุณก่อนเริ่มสอบครับนาย!");
+        
+        document.getElementById('display-name').innerText = userName;
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('quiz-screen').classList.add('active');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const data = quizData[currentQuestion];
+        document.getElementById('question-text').innerText = data.q;
+        document.getElementById('current-idx').innerText = currentQuestion + 1;
+        
+        const list = document.getElementById('options-list');
+        list.innerHTML = "";
+        
+        data.a.forEach((txt, i) => {
+            const div = document.createElement('div');
+            div.className = `option ${userAnswers[currentQuestion] === i ? 'selected' : ''}`;
+            div.innerText = txt;
+            div.onclick = () => selectOption(i);
+            list.appendChild(div);
+        });
+
+        document.getElementById('prev-btn').disabled = currentQuestion === 0;
+        document.getElementById('next-btn').innerText = currentQuestion === quizData.length - 1 ? "ส่งข้อสอบ (Finish)" : "ข้อถัดไป";
+        
+        const progress = ((currentQuestion + 1) / quizData.length) * 100;
+        document.getElementById('progress-fill').style.width = progress + "%";
+    }
+
+    function selectOption(index) {
+        userAnswers[currentQuestion] = index;
+        renderQuestion();
+    }
+
+    function nextQuestion() {
+        if(userAnswers[currentQuestion] === null) return alert("เลือกคำตอบก่อนนะนาย!");
+        
+        if(currentQuestion < quizData.length - 1) {
+            currentQuestion++;
+            renderQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function prevQuestion() {
+        if(currentQuestion > 0) {
+            currentQuestion--;
+            renderQuestion();
+        }
+    }
+
+    function showResult() {
+        let score = 0;
+        quizData.forEach((item, i) => {
+            if(userAnswers[i] === item.c) score++;
+        });
+
+        document.getElementById('quiz-screen').classList.remove('active');
+        document.getElementById('result-screen').classList.add('active');
+        document.getElementById('result-user').innerText = userName;
+        document.getElementById('final-score-val').innerText = `${score} / ${quizData.length}`;
+        
+        let msg = "";
+        if(score === 30) msg = "Perfect! นายคือ PHP Master ตัวจริง!";
+        else if(score >= 24) msg = "เยี่ยมมาก! ความเข้าใจเรื่อง File Handling ของนายดีเยี่ยม";
+        else if(score >= 15) msg = "ผ่านเกณฑ์! แต่น่าจะทบทวนเรื่อง Security เพิ่มหน่อยนะ";
+        else msg = "ยังไม่ผ่านนะนาย ลองกลับไปอ่านบทที่ 9 อีกรอบสู้ๆ!";
+        
+        document.getElementById('result-msg').innerText = msg;
+    }
+
+    function resetQuiz() {
+        userAnswers = new Array(quizData.length).fill(null);
+        currentQuestion = 0;
+        document.getElementById('result-screen').classList.remove('active');
+        document.getElementById('start-screen').classList.add('active');
+    }
+
+    function goToLesson() {
+        // ลิงก์กลับไปที่ไฟล์บทเรียน PHP ของคุณ
+        window.location.href = "course_php.html";
+    }
+</script>
+</body>
+</html>
