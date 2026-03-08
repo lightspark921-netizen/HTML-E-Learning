@@ -63,8 +63,12 @@
             transition: background-color 0.3s;
         }
 
+        .btn-register {
+            background-color: #42b72a; /* สีเขียวสำหรับปุ่มสมัคร */
+        }
+
         .btn-login:hover {
-            background-color: #166fe5;
+            opacity: 0.9;
         }
 
         .footer-links {
@@ -84,45 +88,95 @@
 <body>
 
 <div class="login-container">
-    <h2>เข้าสู่ระบบ</h2>
-    <form id="loginForm" action="1.html" method="GET">
-        <div class="form-group">
-            <label for="username">ชื่อผู้ใช้</label>
-            <input type="text" id="username" name="username" placeholder="ใส่ชื่อของคุณ" required>
+    <div id="login-box">
+        <h2>เข้าสู่ระบบ</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">ชื่อผู้ใช้</label>
+                <input type="text" id="username" placeholder="ใส่ชื่อของคุณ" required>
+            </div>
+            <div class="form-group">
+                <label for="password">รหัสผ่าน</label>
+                <input type="password" id="password" placeholder="ใส่รหัสผ่าน" required>
+            </div>
+            <button type="submit" class="btn-login">Login</button>
+        </form>
+        <hr>
+        <div class="footer-links">
+            ยังไม่มีบัญชี? <a href="#" onclick="toggleMode()">สมัครสมาชิกใหม่</a>
         </div>
-        <div class="form-group">
-            <label for="password">รหัสผ่าน</label>
-            <input type="password" id="password" name="password" placeholder="ใส่รหัสผ่าน" required>
+    </div>
+
+    <div id="register-box" style="display: none;">
+        <h2>สมัครสมาชิกใหม่</h2>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="reg_username">ตั้งชื่อผู้ใช้</label>
+                <input type="text" id="reg_username" placeholder="ตั้งชื่อของคุณ" required>
+            </div>
+            <div class="form-group">
+                <label for="reg_password">ตั้งรหัสผ่าน</label>
+                <input type="password" id="reg_password" placeholder="ตั้งรหัสผ่าน" required>
+            </div>
+            <button type="submit" class="btn-login btn-register">ยืนยันการสมัคร</button>
+        </form>
+        <hr>
+        <div class="footer-links">
+            มีบัญชีอยู่แล้ว? <a href="#" onclick="toggleMode()">กลับไปหน้า Login</a>
         </div>
-        <button type="submit" class="btn-login">Login</button>
-    </form>
-    <hr>
-    <div class="footer-links">
-        ยังไม่มีบัญชี? <a href="register.html">สมัครสมาชิกใหม่</a>
     </div>
 </div>
 
 <script>
+    // ฟังก์ชันสลับหน้าไปมา
+    function toggleMode() {
+        const loginBox = document.getElementById('login-box');
+        const regBox = document.getElementById('register-box');
+        if (loginBox.style.display === "none") {
+            loginBox.style.display = "block";
+            regBox.style.display = "none";
+        } else {
+            loginBox.style.display = "none";
+            regBox.style.display = "block";
+        }
+    }
+
+    // --- ระบบสมัครสมาชิก (เก็บข้อมูลลง localStorage) ---
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const newUser = document.getElementById('reg_username').value;
+        const newPass = document.getElementById('reg_password').value;
+
+        // บันทึกข้อมูลลงเครื่อง
+        localStorage.setItem('registered_user', newUser);
+        localStorage.setItem('registered_pass', newPass);
+
+        alert('สมัครสมาชิกสำเร็จ! ข้อมูลถูกบันทึกแล้วค่ะ');
+        toggleMode(); // สมัครเสร็จแล้วส่งกลับไปหน้า Login
+    });
+
+    // --- ระบบ Login (ดึงข้อมูลมาเช็ค) ---
     document.getElementById('loginForm').addEventListener('submit', function(e) {
-    
+        e.preventDefault(); 
+
         const user = document.getElementById('username').value;
         const pass = document.getElementById('password').value;
 
-    
-        const correctUser = "fre"; 
-        const correctPass = "0000";
+        const storedUser = localStorage.getItem('registered_user');
+        const storedPass = localStorage.getItem('registered_pass');
 
-     
-        if (user === correctUser && pass === correctPass) {
+        const defaultUser = "fre";
+        const defaultPass = "0000";
+
+        if ((user === defaultUser && pass === defaultPass) || 
+            (user === storedUser && pass === storedPass)) {
+            
             localStorage.setItem('display_name', user);
             alert('เข้าสู่ระบบสำเร็จ! ยินดีต้อนรับคุณ ' + user);
-        
-        } else {
-        
-            e.preventDefault();
-            alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง! กรุณาลองใหม่'); 
+            window.location.href = "index.html"; 
             
-        
+        } else {
+            alert('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!');
             document.getElementById('password').value = "";
             document.getElementById('password').focus();
         }
